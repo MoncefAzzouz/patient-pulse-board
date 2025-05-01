@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,22 +34,6 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -79,14 +64,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -96,6 +73,82 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gray-50 text-foreground;
+  }
+
+  .triage-card {
+    @apply rounded-md shadow-md p-3 my-2 text-white relative overflow-hidden transition-all hover:shadow-lg cursor-pointer;
+  }
+
+  .triage-card-critical {
+    @apply bg-triage-critical;
+  }
+
+  .triage-card-emergency {
+    @apply bg-triage-emergency;
+  }
+  
+  .triage-card-urgent {
+    @apply bg-triage-urgent;
+  }
+  
+  .triage-card-standard {
+    @apply bg-triage-standard;
+  }
+  
+  .triage-card-nonurgent {
+    @apply bg-triage-nonurgent;
+  }
+
+  .patient-card {
+    @apply bg-white border rounded-md shadow-sm p-3 mb-2 hover:shadow-md transition-all flex justify-between items-center;
+  }
+
+  .patient-card-critical {
+    @apply border-l-4 border-triage-critical;
+  }
+
+  .patient-card-emergency {
+    @apply border-l-4 border-triage-emergency;
+  }
+
+  .patient-card-urgent {
+    @apply border-l-4 border-triage-urgent;
+  }
+
+  .patient-card-standard {
+    @apply border-l-4 border-triage-standard;
+  }
+
+  .patient-card-nonurgent {
+    @apply border-l-4 border-triage-nonurgent;
+  }
+
+  .urgency-tag {
+    @apply font-semibold text-right;
+  }
+
+  .urgency-tag-critical {
+    @apply text-triage-critical;
+  }
+
+  .urgency-tag-emergency {
+    @apply text-triage-emergency;
+  }
+
+  .urgency-tag-urgent {
+    @apply text-triage-urgent;
+  }
+
+  .urgency-tag-standard {
+    @apply text-triage-standard;
+  }
+
+  .urgency-tag-nonurgent {
+    @apply text-triage-nonurgent;
+  }
+
+  .section-header {
+    @apply text-2xl font-bold mb-4 mt-6;
   }
 }
