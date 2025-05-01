@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
@@ -129,14 +128,12 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Emergency Department Triage Dashboard</h1>
-          <Button 
-            as={Link} 
-            to="/fingerprint-scan"
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-          >
-            <Fingerprint className="h-4 w-4" />
-            Fingerprint Scan
-          </Button>
+          <Link to="/fingerprint-scan">
+            <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+              <Fingerprint className="h-4 w-4" />
+              Fingerprint Scan
+            </Button>
+          </Link>
         </div>
         
         <TriageSummary />

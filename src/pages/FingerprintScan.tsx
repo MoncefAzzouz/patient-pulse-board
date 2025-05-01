@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -47,7 +46,6 @@ const FingerprintScan = () => {
           toast({
             title: "Patient identified",
             description: `Patient ID: ${patients[randomIndex].id} has been found in the system.`,
-            variant: "success",
           });
         } else {
           setScanning(false);
@@ -85,7 +83,6 @@ const FingerprintScan = () => {
       toast({
         title: "Download started",
         description: "Patient medical report is being downloaded.",
-        variant: "success",
       });
     }
   };
