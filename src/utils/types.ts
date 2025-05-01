@@ -35,3 +35,30 @@ export interface User {
   password: string;
   name: string;
 }
+
+export interface PatientFormData {
+  age: string;
+  gender: string;
+  chestPainType: string;
+  cholesterol: string;
+  exerciseAngina: boolean;
+  plasmaGlucose: string;
+  skinThickness: string;
+  bmi: string;
+  hypertension: boolean;
+  heartDisease: boolean;
+  residenceType: string;
+  smokingStatus: string;
+  symptom: string;
+  temperature: string;
+  heartRate: string;
+  respiratoryRate: string;
+  bloodPressureSys: string;
+  bloodPressureDia: string;
+  spO2: string;
+  glasgowScore: string;
+  consciousness: string;
+  massiveBleeding: boolean;
+  respiratoryDistress: boolean;
+  riskFactors: string;
+}

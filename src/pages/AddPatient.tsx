@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import Header from '../components/Header';
-import { TriageLevel } from '../utils/types';
+import { Patient, TriageLevel, PatientFormData } from '../utils/types';
+import { processNewPatient, getPatientWarnings } from '../utils/triageModel';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const AddPatient = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const AddPatient = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Basic form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PatientFormData>({
     age: '',
     gender: '',
     chestPainType: '',
@@ -47,6 +48,8 @@ const AddPatient = () => {
   });
 
   const [calculatedTriage, setCalculatedTriage] = useState<TriageLevel>('standard');
+  const [urgencyPercentage, setUrgencyPercentage] = useState<number>(0);
+  const [warnings, setWarnings] = useState<string[]>([]);
   
   useEffect(() => {
     // Check if logged in
@@ -56,61 +59,58 @@ const AddPatient = () => {
     }
   }, [navigate]);
 
-  // Calculate triage level based on vital signs
-  // This is a simplified algorithm for demonstration purposes
+  // Calculate triage level using ML model
   useEffect(() => {
-    let level: TriageLevel = 'standard';
-    
-    // Convert form values to numbers for comparison
-    const temp = parseFloat(formData.temperature);
-    const hr = parseInt(formData.heartRate, 10);
-    const rr = parseInt(formData.respiratoryRate, 10);
-    const sp = parseInt(formData.spO2, 10);
-    const gs = parseInt(formData.glasgowScore, 10);
-    
-    // Critical conditions
-    if (
-      formData.massiveBleeding ||
-      (sp > 0 && sp < 90) ||
-      (gs > 0 && gs < 9) ||
-      (formData.consciousness === 'Unresponsive')
-    ) {
-      level = 'critical';
+    try {
+      // Only calculate if enough critical data is present
+      if (
+        formData.age && 
+        formData.temperature && 
+        formData.heartRate && 
+        formData.respiratoryRate && 
+        formData.spO2 && 
+        formData.glasgowScore
+      ) {
+        // Prepare patient data object for prediction
+        const patientData = {
+          age: parseInt(formData.age, 10),
+          gender: formData.gender,
+          chestPainType: parseInt(formData.chestPainType || '0', 10),
+          cholesterol: parseInt(formData.cholesterol || '0', 10),
+          exerciseAngina: formData.exerciseAngina ? 1 : 0,
+          plasmaGlucose: parseInt(formData.plasmaGlucose || '0', 10),
+          skinThickness: parseInt(formData.skinThickness || '0', 10),
+          bmi: parseFloat(formData.bmi || '0'),
+          hypertension: formData.hypertension ? 1 : 0,
+          heartDisease: formData.heartDisease ? 1 : 0,
+          residenceType: formData.residenceType,
+          smokingStatus: formData.smokingStatus,
+          symptom: formData.symptom,
+          temperature: parseFloat(formData.temperature),
+          heartRate: parseInt(formData.heartRate, 10),
+          respiratoryRate: parseInt(formData.respiratoryRate, 10),
+          bloodPressure: `${formData.bloodPressureSys || '0'}/${formData.bloodPressureDia || '0'}`,
+          spO2: parseInt(formData.spO2, 10),
+          glasgowScore: parseInt(formData.glasgowScore, 10),
+          consciousness: formData.consciousness,
+          massiveBleeding: formData.massiveBleeding,
+          respiratoryDistress: formData.respiratoryDistress,
+          riskFactors: formData.riskFactors,
+        };
+        
+        // Process through our triage model
+        const processedPatient = processNewPatient(patientData);
+        
+        // Update state with predictions
+        setCalculatedTriage(processedPatient.triageLevel);
+        setUrgencyPercentage(processedPatient.urgencyPercentage);
+        
+        // Get warnings from patient data
+        setWarnings(getPatientWarnings(processedPatient));
+      }
+    } catch (error) {
+      console.error("Error calculating triage level:", error);
     }
-    // Emergency conditions
-    else if (
-      formData.respiratoryDistress ||
-      (sp > 0 && sp < 93) ||
-      (hr > 120) ||
-      (rr > 24) ||
-      (gs > 0 && gs < 13) ||
-      (temp > 39)
-    ) {
-      level = 'emergency';
-    }
-    // Urgent conditions
-    else if (
-      formData.hypertension ||
-      formData.heartDisease ||
-      (sp > 0 && sp < 95) ||
-      (hr > 100) ||
-      (rr > 20) ||
-      (temp > 38)
-    ) {
-      level = 'urgent';
-    }
-    // Non-urgent conditions
-    else if (
-      (sp > 97) &&
-      (hr < 90) && 
-      (rr < 18) && 
-      (gs === 15) &&
-      (temp < 37.5)
-    ) {
-      level = 'nonurgent';
-    }
-    
-    setCalculatedTriage(level);
   }, [formData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -130,15 +130,59 @@ const AddPatient = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // In a real app, we would submit to an API
-    setTimeout(() => {
+    try {
+      // Format data for API
+      const patientData = {
+        age: parseInt(formData.age, 10),
+        gender: formData.gender,
+        chestPainType: parseInt(formData.chestPainType || '0', 10),
+        cholesterol: parseInt(formData.cholesterol || '0', 10),
+        exerciseAngina: formData.exerciseAngina ? 1 : 0,
+        plasmaGlucose: parseInt(formData.plasmaGlucose || '0', 10),
+        skinThickness: parseInt(formData.skinThickness || '0', 10),
+        bmi: parseFloat(formData.bmi || '0'),
+        hypertension: formData.hypertension ? 1 : 0,
+        heartDisease: formData.heartDisease ? 1 : 0,
+        residenceType: formData.residenceType,
+        smokingStatus: formData.smokingStatus,
+        symptom: formData.symptom,
+        temperature: parseFloat(formData.temperature),
+        heartRate: parseInt(formData.heartRate, 10),
+        respiratoryRate: parseInt(formData.respiratoryRate, 10),
+        bloodPressure: `${formData.bloodPressureSys || '0'}/${formData.bloodPressureDia || '0'}`,
+        spO2: parseInt(formData.spO2, 10),
+        glasgowScore: parseInt(formData.glasgowScore, 10),
+        consciousness: formData.consciousness,
+        massiveBleeding: formData.massiveBleeding,
+        respiratoryDistress: formData.respiratoryDistress,
+        riskFactors: formData.riskFactors,
+      };
+      
+      // Process through our ML model
+      const patient = processNewPatient(patientData);
+      
+      // In a real app, we would send this to a backend API
+      console.log("ML model produced patient data:", patient);
+      
       toast({
         title: "Patient added successfully",
-        description: `Patient has been added with ${calculatedTriage} priority.`,
+        description: `Patient has been added with ${patient.triageLevel} priority (${patient.urgencyPercentage}%).`,
+      });
+      
+      // Simulate API delay
+      setTimeout(() => {
+        setIsLoading(false);
+        navigate('/');
+      }, 1500);
+    } catch (error) {
+      console.error("Error processing patient data:", error);
+      toast({
+        title: "Error adding patient",
+        description: "There was a problem processing the patient data.",
+        variant: "destructive",
       });
       setIsLoading(false);
-      navigate('/');
-    }, 1500);
+    }
   };
 
   const getTriageColor = () => {
@@ -160,15 +204,38 @@ const AddPatient = () => {
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <span>New Patient Registration</span>
-              <div className="text-base">
-                Calculated Triage Level: 
-                <span className={`ml-2 font-bold capitalize ${getTriageColor()}`}>
-                  {calculatedTriage}
+              <div className="flex items-center gap-4">
+                <span className="text-base">
+                  Urgency: 
+                  <span className={`ml-2 font-bold ${getTriageColor()}`}>
+                    {urgencyPercentage}%
+                  </span>
+                </span>
+                <span className="text-base">
+                  Predicted Triage: 
+                  <span className={`ml-2 font-bold capitalize ${getTriageColor()}`}>
+                    {calculatedTriage}
+                  </span>
                 </span>
               </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {warnings.length > 0 && (
+              <div className="mb-6">
+                <Alert className="bg-amber-50 border-amber-200">
+                  <AlertTitle className="text-amber-700">Patient Risk Factors Detected</AlertTitle>
+                  <AlertDescription className="text-amber-600">
+                    <ul className="list-disc pl-5 mt-2">
+                      {warnings.map((warning, i) => (
+                        <li key={i}>{warning}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div>
