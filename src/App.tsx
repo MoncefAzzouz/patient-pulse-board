@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import AddPatient from "./pages/AddPatient";
 import NotFound from "./pages/NotFound";
+import FingerprintScan from "./pages/FingerprintScan";
 import { useEffect } from "react";
 import { patients, patientSummary } from "./data/patients"; 
 
@@ -43,6 +44,7 @@ const App = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/add-patient" element={<AddPatient />} />
+            <Route path="/fingerprint-scan" element={<FingerprintScan />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import PatientCard from '../components/PatientCard';
 import PatientModal from '../components/PatientModal';
 import { Patient } from '../utils/types';
+import { Button } from '@/components/ui/button';
+import { Fingerprint } from 'lucide-react';
 
 const Dashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -125,6 +127,18 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Emergency Department Triage Dashboard</h1>
+          <Button 
+            as={Link} 
+            to="/fingerprint-scan"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Fingerprint className="h-4 w-4" />
+            Fingerprint Scan
+          </Button>
+        </div>
+        
         <TriageSummary />
         
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
