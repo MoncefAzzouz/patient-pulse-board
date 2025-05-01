@@ -5,11 +5,18 @@ import Header from '../components/Header';
 import PatientCard from '../components/PatientCard';
 import PatientModal from '../components/PatientModal';
 import { Patient } from '../utils/types';
-import { patients, patientSummary } from '../data/patients';
 
 const Dashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patientSummary, setPatientSummary] = useState<any>({
+    critical: { count: 0, patients: [] },
+    emergency: { count: 0, patients: [] },
+    urgent: { count: 0, patients: [] },
+    standard: { count: 0, patients: [] },
+    nonurgent: { count: 0, patients: [] }
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,7 +24,42 @@ const Dashboard = () => {
     const loggedIn = localStorage.getItem('loggedIn');
     if (!loggedIn) {
       navigate('/login');
+      return;
     }
+
+    // Load patients from localStorage
+    const loadPatients = () => {
+      const storedPatients = localStorage.getItem('patients');
+      const storedSummary = localStorage.getItem('patientSummary');
+      
+      if (storedPatients) {
+        setPatients(JSON.parse(storedPatients));
+      }
+      
+      if (storedSummary) {
+        setPatientSummary(JSON.parse(storedSummary));
+      }
+    };
+
+    // Load initial data
+    loadPatients();
+    
+    // Set up event listener for storage changes (for real-time updates)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'patients' || e.key === 'patientSummary') {
+        loadPatients();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check for updates every few seconds (as a fallback)
+    const intervalId = setInterval(loadPatients, 3000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
   }, [navigate]);
 
   const handlePatientClick = (patient: Patient) => {

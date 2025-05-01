@@ -131,7 +131,7 @@ const AddPatient = () => {
     setIsLoading(true);
 
     try {
-      // Format data for API
+      // Format data for processing
       const patientData = {
         age: parseInt(formData.age, 10),
         gender: formData.gender,
@@ -161,19 +161,19 @@ const AddPatient = () => {
       // Process through our ML model
       const patient = processNewPatient(patientData);
       
-      // In a real app, we would send this to a backend API
-      console.log("ML model produced patient data:", patient);
+      // Trigger storage event for dashboard to detect the change
+      window.dispatchEvent(new Event('storage'));
       
       toast({
         title: "Patient added successfully",
         description: `Patient has been added with ${patient.triageLevel} priority (${patient.urgencyPercentage}%).`,
       });
       
-      // Simulate API delay
+      // Small delay before redirecting
       setTimeout(() => {
         setIsLoading(false);
         navigate('/');
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.error("Error processing patient data:", error);
       toast({

@@ -8,6 +8,8 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import AddPatient from "./pages/AddPatient";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
+import { patients, patientSummary } from "./data/patients"; 
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -19,22 +21,35 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/add-patient" element={<AddPatient />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Initialize localStorage with sample data if empty
+  useEffect(() => {
+    if (!localStorage.getItem('patients')) {
+      localStorage.setItem('patients', JSON.stringify(patients));
+    }
+    
+    if (!localStorage.getItem('patientSummary')) {
+      localStorage.setItem('patientSummary', JSON.stringify(patientSummary));
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/add-patient" element={<AddPatient />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
