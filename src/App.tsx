@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import AddPatient from "./pages/AddPatient";
 import NotFound from "./pages/NotFound";
 import FingerprintScan from "./pages/FingerprintScan";
+import DatasetManagement from "./pages/DatasetManagement";
+import Analytics from "./pages/Analytics";
 import { useEffect } from "react";
 import { patients, patientSummary } from "./data/patients"; 
 
@@ -32,6 +34,16 @@ const App = () => {
     if (!localStorage.getItem('patientSummary')) {
       localStorage.setItem('patientSummary', JSON.stringify(patientSummary));
     }
+
+    // Initialize empty CSV storage
+    if (!localStorage.getItem('patientCSV')) {
+      const headers = 'id,age,gender,chestPainType,cholesterol,exerciseAngina,' +
+        'plasmaGlucose,skinThickness,bmi,hypertension,heartDisease,' +
+        'residenceType,smokingStatus,symptom,temperature,heartRate,' +
+        'respiratoryRate,bloodPressure,spO2,glasgowScore,consciousness,' +
+        'massiveBleeding,respiratoryDistress,riskFactors,triageLevel,urgencyPercentage\n';
+      localStorage.setItem('patientCSV', headers);
+    }
   }, []);
 
   return (
@@ -45,6 +57,8 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/add-patient" element={<AddPatient />} />
             <Route path="/fingerprint-scan" element={<FingerprintScan />} />
+            <Route path="/dataset" element={<DatasetManagement />} />
+            <Route path="/analytics" element={<Analytics />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

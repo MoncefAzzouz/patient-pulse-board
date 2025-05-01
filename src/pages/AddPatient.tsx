@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import Header from '../components/Header';
 import { Patient, TriageLevel, PatientFormData } from '../utils/types';
 import { processNewPatient, getPatientWarnings } from '../utils/triageModel';
+import { appendPatientToCSV } from '../utils/csvHandler';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const AddPatient = () => {
@@ -160,6 +161,28 @@ const AddPatient = () => {
       
       // Process through our ML model
       const patient = processNewPatient(patientData);
+      
+      // Append the patient to the CSV (local storage)
+      try {
+        const csvRow = appendPatientToCSV(patient);
+        
+        // Store in localStorage for reference
+        const currentCSV = localStorage.getItem('patientCSV') || '';
+        
+        // If first entry, add headers
+        if (!currentCSV) {
+          const headers = 'id,age,gender,chestPainType,cholesterol,exerciseAngina,' +
+            'plasmaGlucose,skinThickness,bmi,hypertension,heartDisease,' +
+            'residenceType,smokingStatus,symptom,temperature,heartRate,' +
+            'respiratoryRate,bloodPressure,spO2,glasgowScore,consciousness,' +
+            'massiveBleeding,respiratoryDistress,riskFactors,triageLevel,urgencyPercentage\n';
+          localStorage.setItem('patientCSV', headers + csvRow);
+        } else {
+          localStorage.setItem('patientCSV', currentCSV + csvRow);
+        }
+      } catch (error) {
+        console.error("Error appending to CSV:", error);
+      }
       
       // Trigger storage event for dashboard to detect the change
       window.dispatchEvent(new Event('storage'));
