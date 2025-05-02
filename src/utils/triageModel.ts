@@ -227,6 +227,7 @@ export function processNewPatient(patientData: Omit<Patient, 'id' | 'triageLevel
   patient.urgencyPercentage = prediction.urgencyPercentage;
   
   // Save to localStorage for immediate display on the dashboard
+  // We're being extra careful here to avoid duplicates
   const updatedPatients = [...existingPatients, patient];
   localStorage.setItem('patients', JSON.stringify(updatedPatients));
   

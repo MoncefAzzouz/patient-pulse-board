@@ -10,6 +10,11 @@ interface PatientCardProps {
 }
 
 const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
+  // Check if patient is undefined or null
+  if (!patient) {
+    return null;
+  }
+  
   const getTriageClassName = () => {
     return `patient-card patient-card-${patient.triageLevel}`;
   };

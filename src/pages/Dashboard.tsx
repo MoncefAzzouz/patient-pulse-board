@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
@@ -30,15 +31,21 @@ const Dashboard = () => {
 
     // Load patients from localStorage
     const loadPatients = () => {
-      const storedPatients = localStorage.getItem('patients');
-      const storedSummary = localStorage.getItem('patientSummary');
-      
-      if (storedPatients) {
-        setPatients(JSON.parse(storedPatients));
-      }
-      
-      if (storedSummary) {
-        setPatientSummary(JSON.parse(storedSummary));
+      try {
+        const storedPatients = localStorage.getItem('patients');
+        const storedSummary = localStorage.getItem('patientSummary');
+        
+        if (storedPatients) {
+          const parsedPatients = JSON.parse(storedPatients);
+          setPatients(parsedPatients);
+        }
+        
+        if (storedSummary) {
+          const parsedSummary = JSON.parse(storedSummary);
+          setPatientSummary(parsedSummary);
+        }
+      } catch (error) {
+        console.error("Error loading patient data:", error);
       }
     };
 
@@ -54,12 +61,13 @@ const Dashboard = () => {
     
     window.addEventListener('storage', handleStorageChange);
     
-    // Also check for updates every few seconds (as a fallback)
-    const intervalId = setInterval(loadPatients, 3000);
+    // Add a custom event listener for our app's updates
+    const handleCustomEvent = () => loadPatients();
+    window.addEventListener('patientDataUpdated', handleCustomEvent);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(intervalId);
+      window.removeEventListener('patientDataUpdated', handleCustomEvent);
     };
   }, [navigate]);
 

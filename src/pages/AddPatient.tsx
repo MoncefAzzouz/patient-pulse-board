@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -165,8 +164,6 @@ const AddPatient = () => {
       // Append the patient to the CSV (local storage)
       try {
         const csvRow = appendPatientToCSV(patient);
-        
-        // Store in localStorage for reference
         const currentCSV = localStorage.getItem('patientCSV') || '';
         
         // If first entry, add headers
@@ -189,7 +186,7 @@ const AddPatient = () => {
       
       toast({
         title: "Patient added successfully",
-        description: `Patient has been added with ${patient.triageLevel} priority (${patient.urgencyPercentage}%).`,
+        description: `Patient ID ${patient.id} has been added with ${patient.triageLevel} priority (${patient.urgencyPercentage}%).`,
       });
       
       // Small delay before redirecting
