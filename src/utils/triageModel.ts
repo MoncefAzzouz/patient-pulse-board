@@ -1,4 +1,3 @@
-
 import { Patient, TriageLevel, PatientFormData } from './types';
 
 // Define the triage level labels
@@ -227,12 +226,25 @@ export function processNewPatient(patientData: Omit<Patient, 'id' | 'triageLevel
   patient.urgencyPercentage = prediction.urgencyPercentage;
   
   // Save to localStorage for immediate display on the dashboard
-  // We're being extra careful here to avoid duplicates
-  const updatedPatients = [...existingPatients, patient];
+  // Add the patient to existing patients without duplication
+  const updatedPatients = [...existingPatients];
+  
+  // Check if patient with this ID already exists, if so replace it
+  const existingIndex = updatedPatients.findIndex(p => p.id === patient.id);
+  if (existingIndex >= 0) {
+    updatedPatients[existingIndex] = patient;
+  } else {
+    // Otherwise add as new patient
+    updatedPatients.push(patient);
+  }
+  
   localStorage.setItem('patients', JSON.stringify(updatedPatients));
   
   // Update patient summary for the dashboard
   updatePatientSummary(updatedPatients);
+  
+  // Dispatch a custom event to notify the dashboard about the update
+  window.dispatchEvent(new Event('patientDataUpdated'));
   
   return patient;
 }

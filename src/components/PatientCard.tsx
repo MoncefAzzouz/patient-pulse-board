@@ -12,6 +12,7 @@ interface PatientCardProps {
 const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
   // Check if patient is undefined or null
   if (!patient) {
+    console.log("Undefined patient in PatientCard");
     return null;
   }
   

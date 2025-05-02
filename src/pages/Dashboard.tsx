@@ -32,11 +32,13 @@ const Dashboard = () => {
     // Load patients from localStorage
     const loadPatients = () => {
       try {
+        console.log("Loading patient data...");
         const storedPatients = localStorage.getItem('patients');
         const storedSummary = localStorage.getItem('patientSummary');
         
         if (storedPatients) {
           const parsedPatients = JSON.parse(storedPatients);
+          console.log("Loaded patients:", parsedPatients.length);
           setPatients(parsedPatients);
         }
         
@@ -55,6 +57,7 @@ const Dashboard = () => {
     // Set up event listener for storage changes (for real-time updates)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'patients' || e.key === 'patientSummary') {
+        console.log("Storage changed, reloading patients");
         loadPatients();
       }
     };
@@ -62,7 +65,11 @@ const Dashboard = () => {
     window.addEventListener('storage', handleStorageChange);
     
     // Add a custom event listener for our app's updates
-    const handleCustomEvent = () => loadPatients();
+    const handleCustomEvent = () => {
+      console.log("Custom event triggered, reloading patients");
+      loadPatients();
+    };
+    
     window.addEventListener('patientDataUpdated', handleCustomEvent);
     
     return () => {

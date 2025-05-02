@@ -18,6 +18,7 @@ const AddPatient = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Basic form state
   const [formData, setFormData] = useState<PatientFormData>({
@@ -126,8 +127,15 @@ const AddPatient = () => {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting || isLoading) {
+      return;
+    }
+    
+    setIsSubmitting(true);
     setIsLoading(true);
 
     try {
@@ -181,9 +189,9 @@ const AddPatient = () => {
         console.error("Error appending to CSV:", error);
       }
       
-      // Trigger storage event for dashboard to detect the change
-      window.dispatchEvent(new Event('storage'));
+      console.log("Patient added:", patient);
       
+      // Show success message
       toast({
         title: "Patient added successfully",
         description: `Patient ID ${patient.id} has been added with ${patient.triageLevel} priority (${patient.urgencyPercentage}%).`,
@@ -192,6 +200,7 @@ const AddPatient = () => {
       // Small delay before redirecting
       setTimeout(() => {
         setIsLoading(false);
+        setIsSubmitting(false);
         navigate('/');
       }, 1000);
     } catch (error) {
@@ -202,6 +211,7 @@ const AddPatient = () => {
         variant: "destructive",
       });
       setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
