@@ -79,17 +79,11 @@
 
   /* Triage cards with enhanced styling */
   .triage-card {
-    @apply rounded-xl shadow-md p-4 my-2 text-white relative overflow-hidden transition-all hover:shadow-xl cursor-pointer hover:translate-y-[-2px] backdrop-blur-sm animate-fade-in;
-  }
-
-  .triage-card::before {
-    @apply content-[''] absolute inset-0 opacity-20 transition-opacity hover:opacity-30;
-    background: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
+    @apply rounded-xl shadow-md p-4 my-2 text-white relative overflow-hidden transition-all hover:shadow-xl cursor-pointer hover:translate-y-[-2px] backdrop-blur-sm;
   }
 
   .triage-card-critical {
     @apply bg-gradient-to-r from-triage-critical to-red-700;
-    animation: glow 1.5s ease-in-out infinite;
   }
 
   .triage-card-emergency {
@@ -109,7 +103,7 @@
   }
 
   .patient-card {
-    @apply bg-white backdrop-blur-sm bg-opacity-90 border rounded-lg shadow-sm p-4 mb-3 hover:shadow-md transition-all flex justify-between items-center transform hover:scale-[1.02] animate-fade-in;
+    @apply bg-white border rounded-lg shadow-sm p-4 mb-3 hover:shadow-md transition-all flex justify-between items-center transform hover:scale-[1.01];
   }
 
   .patient-card-critical {
@@ -137,54 +131,33 @@
   }
 
   .urgency-tag-critical {
-    @apply bg-red-100 text-triage-critical;
+    @apply bg-red-50 text-triage-critical border border-red-200;
   }
 
   .urgency-tag-emergency {
-    @apply bg-orange-100 text-triage-emergency;
+    @apply bg-orange-50 text-triage-emergency border border-orange-200;
   }
 
   .urgency-tag-urgent {
-    @apply bg-amber-100 text-triage-urgent;
+    @apply bg-amber-50 text-triage-urgent border border-amber-200;
   }
 
   .urgency-tag-standard {
-    @apply bg-emerald-100 text-triage-standard;
+    @apply bg-emerald-50 text-triage-standard border border-emerald-200;
   }
 
   .urgency-tag-nonurgent {
-    @apply bg-blue-100 text-triage-nonurgent;
+    @apply bg-blue-50 text-triage-nonurgent border border-blue-200;
   }
 
   .section-header {
-    @apply text-2xl font-bold mb-4 mt-6 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent;
+    @apply text-2xl font-bold mb-4 mt-6 text-gray-800;
   }
 
   /* Glass effect */
   .glass {
-    @apply bg-white/70 backdrop-blur-sm border border-white/20;
+    @apply bg-white/90 backdrop-blur-sm border border-white/50 shadow-sm;
   }
-}
-
-/* Specific animations for critical patients */
-@keyframes pulse-critical {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-}
-
-.animate-critical {
-  animation: pulse-critical 1.5s infinite;
-}
-
-/* Emoji indicators */
-.emoji-indicator {
-  @apply absolute right-2 top-2 text-xl opacity-75;
 }
 
 /* Stylish scrollbar */
@@ -206,4 +179,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
-
