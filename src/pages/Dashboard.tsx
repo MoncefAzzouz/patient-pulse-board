@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import Header from '../components/Header';
 import PatientCard from '../components/PatientCard';
 import PatientModal from '../components/PatientModal';
@@ -12,6 +13,7 @@ const Dashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [skippedPatients, setSkippedPatients] = useState<string[]>([]);
   const [patientSummary, setPatientSummary] = useState<any>({
     critical: { count: 0, patients: [] },
     emergency: { count: 0, patients: [] },
@@ -20,6 +22,7 @@ const Dashboard = () => {
     nonurgent: { count: 0, patients: [] }
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Check if logged in
@@ -28,6 +31,14 @@ const Dashboard = () => {
       navigate('/login');
       return;
     }
+
+    // Load skipped patients from localStorage
+    const loadSkippedPatients = () => {
+      const storedSkipped = localStorage.getItem('skippedPatients');
+      if (storedSkipped) {
+        setSkippedPatients(JSON.parse(storedSkipped));
+      }
+    };
 
     // Load patients from localStorage
     const loadPatients = () => {
@@ -53,12 +64,16 @@ const Dashboard = () => {
 
     // Load initial data
     loadPatients();
+    loadSkippedPatients();
     
     // Set up event listener for storage changes (for real-time updates)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'patients' || e.key === 'patientSummary') {
         console.log("Storage changed, reloading patients");
         loadPatients();
+      }
+      if (e.key === 'skippedPatients') {
+        loadSkippedPatients();
       }
     };
     
@@ -87,26 +102,50 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
+  const handleSkipPatient = (patientId: string) => {
+    // Add patient to skipped list
+    const updatedSkipped = [...skippedPatients, patientId];
+    setSkippedPatients(updatedSkipped);
+    
+    // Save to localStorage
+    localStorage.setItem('skippedPatients', JSON.stringify(updatedSkipped));
+    
+    // Show toast notification
+    toast({
+      title: "Patient skipped",
+      description: `Patient ${patientId} has been removed from the queue.`,
+      variant: "default",
+    });
+
+    // Trigger a storage event to update other tabs
+    window.dispatchEvent(new StorageEvent('storage', { key: 'skippedPatients' }));
+  };
+
+  // Filter out skipped patients from each section
+  const getFilteredPatients = (patients: Patient[]) => {
+    return patients.filter(patient => !skippedPatients.includes(patient.id));
+  };
+
   const TriageSummary = () => (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
       <div className="triage-card triage-card-critical">
-        <div className="text-3xl font-bold">{patientSummary.critical.count}</div>
+        <div className="text-3xl font-bold">{patientSummary.critical.count - getFilteredPatients(patientSummary.critical.patients).length + getFilteredPatients(patientSummary.critical.patients).length}</div>
         <div className="text-sm">Critical</div>
       </div>
       <div className="triage-card triage-card-emergency">
-        <div className="text-3xl font-bold">{patientSummary.emergency.count}</div>
+        <div className="text-3xl font-bold">{patientSummary.emergency.count - getFilteredPatients(patientSummary.emergency.patients).length + getFilteredPatients(patientSummary.emergency.patients).length}</div>
         <div className="text-sm">Emergency</div>
       </div>
       <div className="triage-card triage-card-urgent">
-        <div className="text-3xl font-bold">{patientSummary.urgent.count}</div>
+        <div className="text-3xl font-bold">{patientSummary.urgent.count - getFilteredPatients(patientSummary.urgent.patients).length + getFilteredPatients(patientSummary.urgent.patients).length}</div>
         <div className="text-sm">Urgent</div>
       </div>
       <div className="triage-card triage-card-standard">
-        <div className="text-3xl font-bold">{patientSummary.standard.count}</div>
+        <div className="text-3xl font-bold">{patientSummary.standard.count - getFilteredPatients(patientSummary.standard.patients).length + getFilteredPatients(patientSummary.standard.patients).length}</div>
         <div className="text-sm">Standard</div>
       </div>
       <div className="triage-card triage-card-nonurgent">
-        <div className="text-3xl font-bold">{patientSummary.nonurgent.count}</div>
+        <div className="text-3xl font-bold">{patientSummary.nonurgent.count - getFilteredPatients(patientSummary.nonurgent.patients).length + getFilteredPatients(patientSummary.nonurgent.patients).length}</div>
         <div className="text-sm">Non-urgent</div>
       </div>
     </div>
@@ -120,22 +159,28 @@ const Dashboard = () => {
     title: string, 
     patients: Patient[], 
     colorClass: string 
-  }) => (
-    <div className="mb-6">
-      <div className={`text-white font-bold px-4 py-2 mb-2 ${colorClass} rounded`}>
-        {title}
+  }) => {
+    // Filter out skipped patients
+    const filteredPatients = getFilteredPatients(patients);
+    
+    return (
+      <div className="mb-6">
+        <div className={`text-white font-bold px-4 py-2 mb-2 ${colorClass} rounded`}>
+          {title}
+        </div>
+        <div className="px-1">
+          {filteredPatients.map((patient) => (
+            <PatientCard
+              key={patient.id}
+              patient={patient}
+              onClick={() => handlePatientClick(patient)}
+              onSkip={handleSkipPatient}
+            />
+          ))}
+        </div>
       </div>
-      <div className="px-1">
-        {patients.map((patient) => (
-          <PatientCard
-            key={patient.id}
-            patient={patient}
-            onClick={() => handlePatientClick(patient)}
-          />
-        ))}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">

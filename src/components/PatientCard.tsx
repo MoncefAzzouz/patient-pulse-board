@@ -2,14 +2,16 @@
 import React from 'react';
 import { Patient } from '../utils/types';
 import { Card } from './ui/card';
-import { Heart, AlertTriangle, Activity, Check, Info } from 'lucide-react';
+import { Heart, AlertTriangle, Activity, Check, Info, X } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface PatientCardProps {
   patient: Patient;
   onClick: () => void;
+  onSkip?: (patientId: string) => void;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
+const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick, onSkip }) => {
   // Check if patient is undefined or null
   if (!patient) {
     console.log("Undefined patient in PatientCard");
@@ -51,6 +53,13 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
     }
   };
 
+  const handleSkip = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the card onClick
+    if (onSkip) {
+      onSkip(patient.id);
+    }
+  };
+
   return (
     <Card 
       className={getTriageClassName()} 
@@ -69,8 +78,20 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
             Severity: {getSeverityText()}
           </div>
         </div>
-        <div className={getUrgencyClassName()}>
-          {patient.urgencyPercentage}%
+        <div className="flex flex-col items-end">
+          <div className={getUrgencyClassName()}>
+            {patient.urgencyPercentage}%
+          </div>
+          {onSkip && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mt-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              onClick={handleSkip}
+            >
+              <X className="h-4 w-4 mr-1" /> Skip
+            </Button>
+          )}
         </div>
       </div>
     </Card>
