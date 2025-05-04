@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +7,7 @@ import PatientModal from '../components/PatientModal';
 import { Patient } from '../utils/types';
 import { Button } from '@/components/ui/button';
 import { Fingerprint } from 'lucide-react';
+import { skipPatientInSupabase } from '../utils/supabaseClient';
 
 const Dashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -102,23 +102,32 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
-  const handleSkipPatient = (patientId: string) => {
-    // Add patient to skipped list
+  const handleSkipPatient = async (patientId: string) => {
+    // Add patient to skipped list locally
     const updatedSkipped = [...skippedPatients, patientId];
     setSkippedPatients(updatedSkipped);
     
     // Save to localStorage
     localStorage.setItem('skippedPatients', JSON.stringify(updatedSkipped));
     
+    // Also remove from Supabase if connected
+    try {
+      await skipPatientInSupabase(patientId);
+      console.log(`Patient ${patientId} removed from Supabase`);
+    } catch (error) {
+      console.error("Error removing patient from Supabase:", error);
+    }
+    
     // Show toast notification
     toast({
       title: "Patient skipped",
-      description: `Patient ${patientId} has been removed from the queue.`,
+      description: `Patient ${patientId} has been removed from the queue and Supabase database.`,
       variant: "default",
     });
 
     // Trigger a storage event to update other tabs
     window.dispatchEvent(new StorageEvent('storage', { key: 'skippedPatients' }));
+    window.dispatchEvent(new Event('patientDataUpdated'));
   };
 
   // Filter out skipped patients from each section

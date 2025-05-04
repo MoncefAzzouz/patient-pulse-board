@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Patient } from '../utils/types';
 import { Card } from './ui/card';

@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { parseCSVData, exportPatientsToCSV } from '../utils/csvHandler';
 import { Patient } from '../utils/types';
+import { syncPatientsWithSupabase, fetchPatientsFromSupabase, exportPatientsFromSupabase } from '../utils/supabaseClient';
+import { Database, FileExport, FileImport } from 'lucide-react';
 
 const DatasetManagement = () => {
   const navigate = useNavigate();
@@ -15,6 +17,7 @@ const DatasetManagement = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     // Check if logged in
@@ -24,14 +27,44 @@ const DatasetManagement = () => {
       return;
     }
 
-    // Load patients from localStorage
-    const storedPatients = localStorage.getItem('patients');
-    if (storedPatients) {
-      setPatients(JSON.parse(storedPatients));
-    }
-  }, [navigate]);
+    // Load patients from localStorage and attempt to load from Supabase
+    const loadPatients = async () => {
+      // First load from localStorage as fallback
+      const storedPatients = localStorage.getItem('patients');
+      if (storedPatients) {
+        setPatients(JSON.parse(storedPatients));
+      }
+      
+      // Then try to load from Supabase
+      try {
+        setIsSyncing(true);
+        const supabasePatients = await fetchPatientsFromSupabase();
+        if (supabasePatients && supabasePatients.length > 0) {
+          setPatients(supabasePatients);
+          localStorage.setItem('patients', JSON.stringify(supabasePatients));
+          updatePatientSummary(supabasePatients);
+          
+          toast({
+            title: "Supabase Sync Complete",
+            description: `Loaded ${supabasePatients.length} patients from Supabase.`,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading patients from Supabase:", error);
+        toast({
+          title: "Supabase Sync Failed",
+          description: "Failed to load patients from Supabase. Using local data instead.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+    
+    loadPatients();
+  }, [navigate, toast]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) {
       return;
     }
@@ -40,7 +73,7 @@ const DatasetManagement = () => {
     const file = e.target.files[0];
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         if (event.target && typeof event.target.result === 'string') {
           const csvData = event.target.result;
@@ -62,8 +95,29 @@ const DatasetManagement = () => {
             description: `Successfully imported ${newPatients.length} patients.`,
           });
           
+          // Sync with Supabase
+          try {
+            setIsSyncing(true);
+            await syncPatientsWithSupabase(combinedPatients);
+            
+            toast({
+              title: "Supabase Sync Complete",
+              description: "Patient data successfully synced with Supabase.",
+            });
+          } catch (error) {
+            console.error("Error syncing with Supabase:", error);
+            toast({
+              title: "Supabase Sync Failed",
+              description: "Failed to sync patients with Supabase. Data is saved locally only.",
+              variant: "destructive",
+            });
+          } finally {
+            setIsSyncing(false);
+          }
+          
           // Trigger storage event for dashboard to detect the change
           window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new Event('patientDataUpdated'));
         }
       } catch (error) {
         console.error("Error parsing CSV data:", error);
@@ -93,9 +147,31 @@ const DatasetManagement = () => {
     reader.readAsText(file);
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     try {
-      const csvContent = exportPatientsToCSV(patients);
+      setIsLoading(true);
+      
+      // Try to get the latest data from Supabase first
+      let patientsToExport = patients;
+      try {
+        const supabasePatients = await exportPatientsFromSupabase();
+        if (supabasePatients && supabasePatients.length > 0) {
+          patientsToExport = supabasePatients;
+          toast({
+            title: "Export preparation",
+            description: "Successfully fetched latest data from Supabase for export.",
+          });
+        }
+      } catch (error) {
+        console.error("Error getting patients from Supabase for export:", error);
+        toast({
+          title: "Supabase Connection Issue",
+          description: "Using local data for export instead of Supabase data.",
+          variant: "destructive",
+        });
+      }
+      
+      const csvContent = exportPatientsToCSV(patientsToExport);
       
       // Create a downloadable link
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -114,7 +190,7 @@ const DatasetManagement = () => {
       
       toast({
         title: "Export successful",
-        description: `Exported ${patients.length} patients to CSV.`,
+        description: `Exported ${patientsToExport.length} patients to CSV.`,
       });
     } catch (error) {
       console.error("Error exporting CSV:", error);
@@ -124,6 +200,8 @@ const DatasetManagement = () => {
         description: "There was a problem exporting the dataset.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -159,12 +237,18 @@ const DatasetManagement = () => {
         <div className="grid grid-cols-1 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Import Dataset</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Import Dataset</CardTitle>
+                <div className="text-sm text-blue-600 font-medium flex items-center gap-2">
+                  <Database className="h-4 w-4" />
+                  Synced with Supabase
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
                 <p className="text-gray-600 mb-4">
-                  Upload a CSV file to import patient data. The system will automatically classify patients using the ML model.
+                  Upload a CSV file to import patient data. The system will automatically classify patients using the ML model and sync with Supabase.
                 </p>
                 <div className="flex items-center space-x-4">
                   <div className="flex-1">
@@ -174,7 +258,7 @@ const DatasetManagement = () => {
                       id="csv-upload"
                       className="border border-gray-300 rounded-md p-2 w-full"
                       onChange={handleFileUpload}
-                      disabled={isLoading}
+                      disabled={isLoading || isSyncing}
                     />
                   </div>
                 </div>
@@ -200,14 +284,14 @@ const DatasetManagement = () => {
             <CardContent>
               <div className="mb-4">
                 <p className="text-gray-600 mb-4">
-                  Export all current patient data to a CSV file. The export includes triage levels and urgency percentages.
+                  Export all current patient data to a CSV file. Data will be fetched from Supabase to ensure you have the latest information.
                 </p>
                 <Button 
                   onClick={handleExportCSV}
-                  disabled={patients.length === 0}
-                  className="w-full md:w-auto"
+                  disabled={patients.length === 0 || isLoading || isSyncing}
+                  className="w-full md:w-auto flex items-center gap-2"
                 >
-                  Export to CSV ({patients.length} patients)
+                  <FileExport className="h-4 w-4" /> Export to CSV ({patients.length} patients)
                 </Button>
               </div>
             </CardContent>
