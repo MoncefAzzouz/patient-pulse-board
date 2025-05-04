@@ -123,7 +123,7 @@ const Dashboard = () => {
 
   // Filter out skipped patients from each section
   const getFilteredPatients = (patients: Patient[]) => {
-    return patients.filter(patient => !skippedPatients.includes(patient.id));
+    return patients.filter(patient => !skippedPatients.includes(patient.id.toString()));
   };
 
   const TriageSummary = () => (

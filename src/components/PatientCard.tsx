@@ -56,7 +56,7 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick, onSkip }) =
   const handleSkip = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the card onClick
     if (onSkip) {
-      onSkip(patient.id);
+      onSkip(patient.id.toString()); // Convert the number to string
     }
   };
 
