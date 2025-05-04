@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -9,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { parseCSVData, exportPatientsToCSV } from '../utils/csvHandler';
 import { Patient } from '../utils/types';
 import { syncPatientsWithSupabase, fetchPatientsFromSupabase, exportPatientsFromSupabase } from '../utils/supabaseClient';
-import { Database, FileExport, FileImport } from 'lucide-react';
+import { Database, FileText, Upload } from 'lucide-react';
 
 const DatasetManagement = () => {
   const navigate = useNavigate();
@@ -291,7 +290,7 @@ const DatasetManagement = () => {
                   disabled={patients.length === 0 || isLoading || isSyncing}
                   className="w-full md:w-auto flex items-center gap-2"
                 >
-                  <FileExport className="h-4 w-4" /> Export to CSV ({patients.length} patients)
+                  <FileText className="h-4 w-4" /> Export to CSV ({patients.length} patients)
                 </Button>
               </div>
             </CardContent>
