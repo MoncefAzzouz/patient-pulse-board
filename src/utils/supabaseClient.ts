@@ -69,6 +69,8 @@ const supabaseFormatToPatient = (supabasePatient: any): Patient => {
 // Function to sync patients with Supabase
 export const syncPatientsWithSupabase = async (patients: Patient[]): Promise<void> => {
   try {
+    console.log(`Syncing ${patients.length} patients with Supabase`);
+    
     // First clear existing data to avoid duplicates
     await supabase.from('patients').delete().neq('id', 0);
     
@@ -78,6 +80,8 @@ export const syncPatientsWithSupabase = async (patients: Patient[]): Promise<voi
     
     if (error) {
       console.error('Error syncing patients with Supabase:', error);
+    } else {
+      console.log(`Successfully inserted ${patients.length} patients into Supabase`);
     }
   } catch (err) {
     console.error('Error in syncPatientsWithSupabase:', err);
@@ -87,6 +91,7 @@ export const syncPatientsWithSupabase = async (patients: Patient[]): Promise<voi
 // Function to fetch patients from Supabase
 export const fetchPatientsFromSupabase = async (): Promise<Patient[]> => {
   try {
+    console.log('Fetching patients from Supabase');
     const { data, error } = await supabase
       .from('patients')
       .select('*')
@@ -96,6 +101,8 @@ export const fetchPatientsFromSupabase = async (): Promise<Patient[]> => {
       console.error('Error fetching patients from Supabase:', error);
       return [];
     }
+    
+    console.log(`Fetched ${data.length} patients from Supabase`);
     
     // Convert each Supabase format patient to Patient type
     return data.map(supabaseFormatToPatient);
@@ -108,6 +115,7 @@ export const fetchPatientsFromSupabase = async (): Promise<Patient[]> => {
 // Function to skip (delete) a patient in Supabase
 export const skipPatientInSupabase = async (patientId: string): Promise<void> => {
   try {
+    console.log(`Skipping patient ${patientId} in Supabase`);
     const { error } = await supabase
       .from('patients')
       .delete()
@@ -115,6 +123,8 @@ export const skipPatientInSupabase = async (patientId: string): Promise<void> =>
       
     if (error) {
       console.error('Error skipping patient in Supabase:', error);
+    } else {
+      console.log(`Successfully skipped patient ${patientId} in Supabase`);
     }
   } catch (err) {
     console.error('Error in skipPatientInSupabase:', err);

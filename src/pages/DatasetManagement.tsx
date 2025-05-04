@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -76,17 +77,29 @@ const DatasetManagement = () => {
       try {
         if (event.target && typeof event.target.result === 'string') {
           const csvData = event.target.result;
+          console.log("CSV data loaded, parsing...");
           const newPatients = parseCSVData(csvData);
           
-          // Update localStorage with new patients
-          const existingPatients = JSON.parse(localStorage.getItem('patients') || '[]');
-          const combinedPatients = [...existingPatients, ...newPatients];
-          localStorage.setItem('patients', JSON.stringify(combinedPatients));
+          if (newPatients.length === 0) {
+            setUploadStatus(`Error: No valid patient records found in the CSV file.`);
+            setIsLoading(false);
+            toast({
+              title: "Import failed",
+              description: "No valid patient records found in the CSV file.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          console.log(`Successfully parsed ${newPatients.length} patients`);
+          
+          // Start with fresh patients from the CSV (replace rather than combine)
+          localStorage.setItem('patients', JSON.stringify(newPatients));
           
           // Update patient summary
-          updatePatientSummary(combinedPatients);
+          updatePatientSummary(newPatients);
           
-          setPatients(combinedPatients);
+          setPatients(newPatients);
           setUploadStatus(`Successfully imported ${newPatients.length} patients from the dataset.`);
           
           toast({
@@ -97,7 +110,7 @@ const DatasetManagement = () => {
           // Sync with Supabase
           try {
             setIsSyncing(true);
-            await syncPatientsWithSupabase(combinedPatients);
+            await syncPatientsWithSupabase(newPatients);
             
             toast({
               title: "Supabase Sync Complete",
@@ -216,8 +229,12 @@ const DatasetManagement = () => {
     
     // Group patients by triage level
     patients.forEach(patient => {
-      summary[patient.triageLevel].count += 1;
-      summary[patient.triageLevel].patients.push(patient);
+      if (summary[patient.triageLevel]) {
+        summary[patient.triageLevel].count += 1;
+        summary[patient.triageLevel].patients.push(patient);
+      } else {
+        console.warn(`Invalid triage level: ${patient.triageLevel}`);
+      }
     });
     
     // Sort patients within each triage level by urgency percentage (descending)
@@ -227,6 +244,7 @@ const DatasetManagement = () => {
     });
     
     localStorage.setItem('patientSummary', JSON.stringify(summary));
+    console.log('Updated patient summary:', summary);
   };
 
   return (
