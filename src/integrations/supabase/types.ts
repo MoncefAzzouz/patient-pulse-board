@@ -15,6 +15,93 @@ export type Database = {
         Update: {}
         Relationships: []
       }
+      patients: {
+        Row: {
+          age: number
+          bloodpressure: string
+          bmi: number
+          chestpaintype: number
+          cholesterol: number
+          consciousness: string
+          exerciseangina: number
+          gender: string
+          glasgowscore: number
+          heartdisease: number
+          heartrate: number
+          hypertension: number
+          id: number
+          massivebleeding: boolean
+          plasmaglucose: number
+          residencetype: string
+          respiratorydistress: boolean
+          respiratoryrate: number
+          riskfactors: string
+          skinthickness: number
+          smokingstatus: string
+          spo2: number
+          symptom: string
+          temperature: number
+          triagelevel: string
+          urgencypercentage: number
+        }
+        Insert: {
+          age: number
+          bloodpressure: string
+          bmi: number
+          chestpaintype: number
+          cholesterol: number
+          consciousness: string
+          exerciseangina: number
+          gender: string
+          glasgowscore: number
+          heartdisease: number
+          heartrate: number
+          hypertension: number
+          id: number
+          massivebleeding: boolean
+          plasmaglucose: number
+          residencetype: string
+          respiratorydistress: boolean
+          respiratoryrate: number
+          riskfactors: string
+          skinthickness: number
+          smokingstatus: string
+          spo2: number
+          symptom: string
+          temperature: number
+          triagelevel: string
+          urgencypercentage: number
+        }
+        Update: {
+          age?: number
+          bloodpressure?: string
+          bmi?: number
+          chestpaintype?: number
+          cholesterol?: number
+          consciousness?: string
+          exerciseangina?: number
+          gender?: string
+          glasgowscore?: number
+          heartdisease?: number
+          heartrate?: number
+          hypertension?: number
+          id?: number
+          massivebleeding?: boolean
+          plasmaglucose?: number
+          residencetype?: string
+          respiratorydistress?: boolean
+          respiratoryrate?: number
+          riskfactors?: string
+          skinthickness?: number
+          smokingstatus?: string
+          spo2?: number
+          symptom?: string
+          temperature?: number
+          triagelevel?: string
+          urgencypercentage?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
