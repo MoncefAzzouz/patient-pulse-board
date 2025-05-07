@@ -209,3 +209,40 @@ export const getPatientWarnings = (patient: Patient): string[] => {
   
   return warnings;
 };
+
+// New function to update patient summary after adding a new patient
+export const updatePatientSummary = (newPatient: Patient): void => {
+  try {
+    // Get existing patient summary
+    const storedSummary = localStorage.getItem('patientSummary');
+    let patientSummary = storedSummary ? JSON.parse(storedSummary) : {
+      critical: { count: 0, patients: [] },
+      emergency: { count: 0, patients: [] },
+      urgent: { count: 0, patients: [] },
+      standard: { count: 0, patients: [] },
+      nonurgent: { count: 0, patients: [] }
+    };
+    
+    // Get existing patients
+    const storedPatients = localStorage.getItem('patients');
+    let patients = storedPatients ? JSON.parse(storedPatients) : [];
+    
+    // Add new patient to the patients array
+    patients.push(newPatient);
+    
+    // Add the patient to the appropriate triage level in the summary
+    patientSummary[newPatient.triageLevel].patients.push(newPatient);
+    patientSummary[newPatient.triageLevel].count++;
+    
+    // Save updated patients and summary to localStorage
+    localStorage.setItem('patients', JSON.stringify(patients));
+    localStorage.setItem('patientSummary', JSON.stringify(patientSummary));
+    
+    // Dispatch an event to notify the dashboard to reload data
+    window.dispatchEvent(new CustomEvent('patientDataUpdated'));
+    
+    console.log(`Patient ${newPatient.id} added to ${newPatient.triageLevel} level.`);
+  } catch (error) {
+    console.error("Error updating patient summary:", error);
+  }
+};

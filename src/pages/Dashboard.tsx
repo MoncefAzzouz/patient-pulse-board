@@ -126,9 +126,9 @@ const Dashboard = () => {
         {title}
       </div>
       <div className="px-1">
-        {patients.map((patient) => (
+        {patients && patients.map((patient) => (
           <PatientCard
-            key={patient.id}
+            key={`patient-${patient.id}`}
             patient={patient}
             onClick={() => handlePatientClick(patient)}
           />
@@ -157,35 +157,35 @@ const Dashboard = () => {
           <div className="col-span-1">
             <TriageSection 
               title="Critical" 
-              patients={patientSummary.critical.patients} 
+              patients={patientSummary.critical.patients || []} 
               colorClass="bg-triage-critical"
             />
           </div>
           <div className="col-span-1">
             <TriageSection 
               title="Emergency" 
-              patients={patientSummary.emergency.patients} 
+              patients={patientSummary.emergency.patients || []} 
               colorClass="bg-triage-emergency"
             />
           </div>
           <div className="col-span-1">
             <TriageSection 
               title="Urgent" 
-              patients={patientSummary.urgent.patients} 
+              patients={patientSummary.urgent.patients || []} 
               colorClass="bg-triage-urgent"
             />
           </div>
           <div className="col-span-1">
             <TriageSection 
               title="Standard" 
-              patients={patientSummary.standard.patients} 
+              patients={patientSummary.standard.patients || []} 
               colorClass="bg-triage-standard"
             />
           </div>
           <div className="col-span-1">
             <TriageSection 
               title="Non-urgent" 
-              patients={patientSummary.nonurgent.patients} 
+              patients={patientSummary.nonurgent.patients || []} 
               colorClass="bg-triage-nonurgent"
             />
           </div>

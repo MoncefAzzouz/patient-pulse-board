@@ -196,6 +196,9 @@ const AddPatient = () => {
         console.error("Error appending to CSV:", error);
       }
       
+      // Update patient summary and trigger dashboard update
+      updatePatientSummary(patient);
+      
       console.log("Patient added:", patient);
       
       // Show success message
