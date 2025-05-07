@@ -6,7 +6,8 @@ import PatientCard from '../components/PatientCard';
 import PatientModal from '../components/PatientModal';
 import { Patient } from '../utils/types';
 import { Button } from '@/components/ui/button';
-import { Fingerprint } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -20,6 +21,7 @@ const Dashboard = () => {
     nonurgent: { count: 0, patients: [] }
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Check if logged in
@@ -87,6 +89,103 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
+  const handleMarkDone = (patientId: number) => {
+    try {
+      // Remove patient from all data stores
+      const updatedPatients = patients.filter(p => p.id !== patientId);
+      
+      // Update patient summary by recalculating counts
+      const newSummary = {
+        critical: { count: 0, patients: [] },
+        emergency: { count: 0, patients: [] },
+        urgent: { count: 0, patients: [] },
+        standard: { count: 0, patients: [] },
+        nonurgent: { count: 0, patients: [] }
+      };
+      
+      // Rebuild summary from updated patients list
+      updatedPatients.forEach(patient => {
+        newSummary[patient.triageLevel].patients.push(patient);
+        newSummary[patient.triageLevel].count++;
+      });
+      
+      // Update localStorage and state
+      localStorage.setItem('patients', JSON.stringify(updatedPatients));
+      localStorage.setItem('patientSummary', JSON.stringify(newSummary));
+      
+      // Update state
+      setPatients(updatedPatients);
+      setPatientSummary(newSummary);
+      
+      // If the deleted patient was being viewed, close the modal
+      if (selectedPatient && selectedPatient.id === patientId) {
+        setIsModalOpen(false);
+      }
+      
+      // Show toast
+      toast({
+        title: "Patient removed",
+        description: `Patient ${patientId} has been marked as done and removed.`,
+      });
+      
+    } catch (error) {
+      console.error("Error removing patient:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove patient. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdatePatient = (updatedPatient: Patient) => {
+    try {
+      // First remove patient from all collections
+      const patientsWithoutUpdated = patients.filter(p => p.id !== updatedPatient.id);
+      
+      // Add the updated patient
+      const updatedPatients = [...patientsWithoutUpdated, updatedPatient];
+      
+      // Recalculate summary
+      const newSummary = {
+        critical: { count: 0, patients: [] },
+        emergency: { count: 0, patients: [] },
+        urgent: { count: 0, patients: [] },
+        standard: { count: 0, patients: [] },
+        nonurgent: { count: 0, patients: [] }
+      };
+      
+      // Rebuild summary
+      updatedPatients.forEach(patient => {
+        newSummary[patient.triageLevel].patients.push(patient);
+        newSummary[patient.triageLevel].count++;
+      });
+      
+      // Update localStorage
+      localStorage.setItem('patients', JSON.stringify(updatedPatients));
+      localStorage.setItem('patientSummary', JSON.stringify(newSummary));
+      
+      // Update state
+      setPatients(updatedPatients);
+      setPatientSummary(newSummary);
+      setSelectedPatient(updatedPatient);
+      
+      // Show toast
+      toast({
+        title: "Patient updated",
+        description: `Patient ${updatedPatient.id}'s information has been updated.`,
+      });
+      
+    } catch (error) {
+      console.error("Error updating patient:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update patient. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const TriageSummary = () => (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
       <div className="triage-card triage-card-critical">
@@ -131,6 +230,7 @@ const Dashboard = () => {
             key={`patient-${patient.id}`}
             patient={patient}
             onClick={() => handlePatientClick(patient)}
+            onMarkDone={handleMarkDone}
           />
         ))}
       </div>
@@ -145,8 +245,8 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold text-gray-800">Emergency Department Triage Dashboard</h1>
           <Link to="/fingerprint-scan">
             <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-              <Fingerprint className="h-4 w-4" />
-              Fingerprint Scan
+              <CreditCard className="h-4 w-4" />
+              Shifaa Card Reader
             </Button>
           </Link>
         </div>
@@ -196,6 +296,7 @@ const Dashboard = () => {
         patient={selectedPatient} 
         open={isModalOpen} 
         onClose={handleModalClose}
+        onUpdate={handleUpdatePatient}
       />
     </div>
   );

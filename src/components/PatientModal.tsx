@@ -1,18 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Patient } from '../utils/types';
 import { generatePdf } from '../utils/pdfGenerator';
-import { Download } from 'lucide-react';
+import { Download, Edit } from 'lucide-react';
+import PatientEditForm from './PatientEditForm';
 
 interface PatientModalProps {
   patient: Patient | null;
   open: boolean;
   onClose: () => void;
+  onUpdate: (updatedPatient: Patient) => void;
 }
 
-const PatientModal: React.FC<PatientModalProps> = ({ patient, open, onClose }) => {
+const PatientModal: React.FC<PatientModalProps> = ({ patient, open, onClose, onUpdate }) => {
+  const [isEditing, setIsEditing] = useState(false);
+
   if (!patient) return null;
 
   const handleDownloadPdf = () => {
@@ -25,6 +29,36 @@ const PatientModal: React.FC<PatientModalProps> = ({ patient, open, onClose }) =
     const [systolic, diastolic] = bp.split('/');
     return `${systolic}/${diastolic} mmHg`;
   };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = (updatedPatient: Patient) => {
+    onUpdate(updatedPatient);
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Patient {patient.id}'s Information</DialogTitle>
+          </DialogHeader>
+          <PatientEditForm 
+            patient={patient} 
+            onCancel={handleCancelEdit} 
+            onSave={handleSaveEdit}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -210,6 +244,10 @@ const PatientModal: React.FC<PatientModalProps> = ({ patient, open, onClose }) =
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Close
+          </Button>
+          <Button onClick={handleEditClick} className="flex items-center gap-2">
+            <Edit className="h-4 w-4" />
+            Edit Patient
           </Button>
           <Button onClick={handleDownloadPdf} className="flex items-center gap-2">
             <Download className="h-4 w-4" />
