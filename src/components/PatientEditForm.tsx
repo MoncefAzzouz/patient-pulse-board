@@ -1,12 +1,20 @@
+
 import React, { useState } from 'react';
 import { Patient, PatientFormData } from '../utils/types';
 import { processNewPatient } from '../utils/triageModel';
 import { Button } from './ui/button';
-import BasicInformationSection from './patient-form/BasicInformationSection';
-import VitalSignsSection from './patient-form/VitalSignsSection';
-import CardiacStatusSection from './patient-form/CardiacStatusSection';
-import ClinicalAssessmentSection from './patient-form/ClinicalAssessmentSection';
-import AdditionalInfoSection from './patient-form/AdditionalInfoSection';
+import { BasicInfoProps } from './patient-form/BasicInformationSection';
+import { VitalSignsProps } from './patient-form/VitalSignsSection';
+import { CardiacStatusProps } from './patient-form/CardiacStatusSection';
+import { ClinicalAssessmentProps } from './patient-form/ClinicalAssessmentSection';
+import { AdditionalInfoProps } from './patient-form/AdditionalInfoSection';
+
+// Import form sections
+const BasicInformationSection = React.lazy(() => import('./patient-form/BasicInformationSection'));
+const VitalSignsSection = React.lazy(() => import('./patient-form/VitalSignsSection'));
+const CardiacStatusSection = React.lazy(() => import('./patient-form/CardiacStatusSection'));
+const ClinicalAssessmentSection = React.lazy(() => import('./patient-form/ClinicalAssessmentSection'));
+const AdditionalInfoSection = React.lazy(() => import('./patient-form/AdditionalInfoSection'));
 
 interface PatientEditFormProps {
   patient: Patient;
@@ -96,14 +104,52 @@ const PatientEditForm: React.FC<PatientEditFormProps> = ({ patient, onCancel, on
     onSave(updatedPatient);
   };
 
+  // We need to manually pass the props to avoid TypeScript errors
+  const basicInformationProps: BasicInfoProps = {
+    formData
+  };
+  
+  const vitalSignsProps: VitalSignsProps = {
+    formData
+  };
+  
+  const cardiacStatusProps: CardiacStatusProps = {
+    formData
+  };
+  
+  const clinicalAssessmentProps: ClinicalAssessmentProps = {
+    formData
+  };
+  
+  const additionalInfoProps: AdditionalInfoProps = {
+    formData
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4">
       <div className="grid grid-cols-1 gap-6">
-        <BasicInformationSection formData={formData} onChange={handleInputChange} />
-        <VitalSignsSection formData={formData} onChange={handleInputChange} />
-        <CardiacStatusSection formData={formData} onChange={handleInputChange} />
-        <ClinicalAssessmentSection formData={formData} onChange={handleInputChange} />
-        <AdditionalInfoSection formData={formData} onChange={handleInputChange} />
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <BasicInformationSection 
+            {...basicInformationProps} 
+            handleInputChange={handleInputChange}
+          />
+          <VitalSignsSection
+            {...vitalSignsProps}
+            handleInputChange={handleInputChange}
+          />
+          <CardiacStatusSection
+            {...cardiacStatusProps}
+            handleInputChange={handleInputChange}
+          />
+          <ClinicalAssessmentSection
+            {...clinicalAssessmentProps}
+            handleInputChange={handleInputChange}
+          />
+          <AdditionalInfoSection
+            {...additionalInfoProps}
+            handleInputChange={handleInputChange}
+          />
+        </React.Suspense>
       </div>
       
       <div className="flex justify-end space-x-2 pt-4">
