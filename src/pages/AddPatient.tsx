@@ -51,6 +51,7 @@ const AddPatient = () => {
   const [calculatedTriage, setCalculatedTriage] = useState<TriageLevel>('standard');
   const [urgencyPercentage, setUrgencyPercentage] = useState<number>(0);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [previewData, setPreviewData] = useState<{triageLevel: TriageLevel, urgencyPercentage: number} | null>(null);
   
   useEffect(() => {
     // Check if logged in
@@ -60,7 +61,7 @@ const AddPatient = () => {
     }
   }, [navigate]);
 
-  // Calculate triage level using ML model
+  // Preview the triage level without saving the patient
   useEffect(() => {
     try {
       // Only calculate if enough critical data is present
@@ -72,7 +73,7 @@ const AddPatient = () => {
         formData.spO2 && 
         formData.glasgowScore
       ) {
-        // Prepare patient data object for prediction
+        // Prepare patient data object for prediction (preview only)
         const patientData = {
           age: parseInt(formData.age, 10),
           gender: formData.gender,
@@ -99,15 +100,21 @@ const AddPatient = () => {
           riskFactors: formData.riskFactors,
         };
         
-        // Process through our triage model
-        const processedPatient = processNewPatient(patientData);
+        // Process through our triage model - but don't create a patient
+        const prediction = processNewPatient(patientData, false);
         
-        // Update state with predictions
-        setCalculatedTriage(processedPatient.triageLevel);
-        setUrgencyPercentage(processedPatient.urgencyPercentage);
+        // Update preview data for display only
+        setPreviewData({
+          triageLevel: prediction.triageLevel,
+          urgencyPercentage: prediction.urgencyPercentage
+        });
+        
+        // Update state with predictions for display
+        setCalculatedTriage(prediction.triageLevel);
+        setUrgencyPercentage(prediction.urgencyPercentage);
         
         // Get warnings from patient data
-        setWarnings(getPatientWarnings(processedPatient));
+        setWarnings(getPatientWarnings(prediction));
       }
     } catch (error) {
       console.error("Error calculating triage level:", error);
@@ -166,8 +173,8 @@ const AddPatient = () => {
         riskFactors: formData.riskFactors,
       };
       
-      // Process through our ML model
-      const patient = processNewPatient(patientData);
+      // Process through our ML model, passing true to actually create a patient
+      const patient = processNewPatient(patientData, true);
       
       // Append the patient to the CSV (local storage)
       try {
