@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { parseCSVData, exportPatientsToCSV } from '../utils/csvHandler';
+import { parseCSVData, exportPatientsToCSV, addPatientsToDatabase } from '../utils/csvHandler';
 import { Patient } from '../utils/types';
 
 const DatasetManagement = () => {
@@ -46,28 +46,27 @@ const DatasetManagement = () => {
           const csvData = event.target.result;
           const newPatients = parseCSVData(csvData);
           
-          // Update localStorage with new patients
-          const existingPatients = JSON.parse(localStorage.getItem('patients') || '[]');
-          const combinedPatients = [...existingPatients, ...newPatients];
-          localStorage.setItem('patients', JSON.stringify(combinedPatients));
+          if (newPatients.length === 0) {
+            throw new Error("No patients could be parsed from the file. Please check the CSV format.");
+          }
           
-          // Update patient summary
-          updatePatientSummary(combinedPatients);
+          console.log("Parsed patients:", newPatients);
           
-          setPatients(combinedPatients);
+          // Add patients to database and update dashboard
+          addPatientsToDatabase(newPatients);
+          
+          // Update local state
+          setPatients(prev => [...prev, ...newPatients]);
           setUploadStatus(`Successfully imported ${newPatients.length} patients from the dataset.`);
           
           toast({
             title: "Dataset imported",
             description: `Successfully imported ${newPatients.length} patients.`,
           });
-          
-          // Trigger storage event for dashboard to detect the change
-          window.dispatchEvent(new Event('storage'));
         }
       } catch (error) {
         console.error("Error parsing CSV data:", error);
-        setUploadStatus("Error: Failed to parse CSV data. Please check the file format.");
+        setUploadStatus(`Error: ${error instanceof Error ? error.message : "Failed to parse CSV data. Please check the file format."}`);
         
         toast({
           title: "Import failed",
@@ -125,31 +124,6 @@ const DatasetManagement = () => {
         variant: "destructive",
       });
     }
-  };
-
-  // Function to update patient summary for the dashboard
-  const updatePatientSummary = (patients: Patient[]) => {
-    const summary = {
-      critical: { count: 0, patients: [] as Patient[] },
-      emergency: { count: 0, patients: [] as Patient[] },
-      urgent: { count: 0, patients: [] as Patient[] },
-      standard: { count: 0, patients: [] as Patient[] },
-      nonurgent: { count: 0, patients: [] as Patient[] }
-    };
-    
-    // Group patients by triage level
-    patients.forEach(patient => {
-      summary[patient.triageLevel].count += 1;
-      summary[patient.triageLevel].patients.push(patient);
-    });
-    
-    // Sort patients within each triage level by urgency percentage (descending)
-    Object.keys(summary).forEach(level => {
-      const triageLevel = level as "critical" | "emergency" | "urgent" | "standard" | "nonurgent";
-      summary[triageLevel].patients.sort((a, b) => b.urgencyPercentage - a.urgencyPercentage);
-    });
-    
-    localStorage.setItem('patientSummary', JSON.stringify(summary));
   };
 
   return (

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import FingerprintScanner from '../components/FingerprintScanner';
+import ShifaCardReader from '../components/ShifaCardReader';
 import { Patient } from '../utils/types';
 import { generatePdf } from '../utils/pdfGenerator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Fingerprint, Download, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { CreditCard, Download, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const FingerprintScan = () => {
@@ -101,18 +101,18 @@ const FingerprintScan = () => {
           <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader className="pb-4 text-center">
               <CardTitle className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-3">
-                <Fingerprint className="h-8 w-8 text-blue-500" />
-                Fingerprint Patient Identification
+                <CreditCard className="h-8 w-8 text-blue-500" />
+                Shifa Card Reader
               </CardTitle>
               <CardDescription className="text-gray-600 text-lg">
-                Scan patient fingerprint to retrieve their medical documents
+                Scan patient's Shifa card to retrieve their medical documents
               </CardDescription>
             </CardHeader>
             
             <CardContent>
               {!scanned && !error && (
                 <div className="flex flex-col items-center justify-center py-6">
-                  <FingerprintScanner scanning={scanning} />
+                  <ShifaCardReader scanning={scanning} />
                   
                   {!scanning && (
                     <div className="mt-8 text-center">
@@ -120,11 +120,11 @@ const FingerprintScan = () => {
                         onClick={handleScan} 
                         className="py-6 px-8 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
                       >
-                        <Fingerprint className="mr-2 h-6 w-6" />
-                        Start Fingerprint Scan
+                        <CreditCard className="mr-2 h-6 w-6" />
+                        Scan Shifa Card
                       </Button>
                       <p className="mt-4 text-gray-600">
-                        Place the patient's finger on the scanner and press the button
+                        Place the patient's Shifa card on the reader and press the button
                       </p>
                     </div>
                   )}
@@ -342,7 +342,7 @@ const FingerprintScan = () => {
               {scanned && patient ? (
                 <>
                   <Button variant="outline" onClick={handleReset}>
-                    Scan Another Patient
+                    Scan Another Card
                   </Button>
                   <Button onClick={handleDownload} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
                     <Download className="h-4 w-4" />

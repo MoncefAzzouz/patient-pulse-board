@@ -6,7 +6,7 @@ import PatientCard from '../components/PatientCard';
 import PatientModal from '../components/PatientModal';
 import { Patient } from '../utils/types';
 import { Button } from '@/components/ui/button';
-import { Fingerprint } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -175,8 +175,8 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold text-gray-800">Emergency Department Triage Dashboard</h1>
           <Link to="/fingerprint-scan">
             <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-              <Fingerprint className="h-4 w-4" />
-              Shiffaa Card Reader
+              <CreditCard className="h-4 w-4" />
+              Shifa Card Reader
             </Button>
           </Link>
         </div>
