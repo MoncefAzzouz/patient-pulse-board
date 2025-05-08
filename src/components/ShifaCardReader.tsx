@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CreditCard, NFC } from 'lucide-react';
+import { CreditCard, Nfc } from 'lucide-react';
 
 interface ShifaCardReaderProps {
   scanning: boolean;
@@ -28,7 +28,7 @@ const ShifaCardReader: React.FC<ShifaCardReaderProps> = ({ scanning }) => {
               strokeWidth={1} 
             />
             {scanning && (
-              <NFC 
+              <Nfc 
                 className="w-8 h-8 text-blue-200 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" 
                 strokeWidth={1} 
               />

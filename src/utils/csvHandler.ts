@@ -1,4 +1,3 @@
-
 import { Patient } from './types';
 import { processNewPatient, updatePatientSummary } from './triageModel';
 
@@ -17,6 +16,7 @@ export const parseCSVData = (csvContent: string): Patient[] => {
     try {
       // Map CSV data to patient object - adjust field mapping based on your CSV structure
       const patientData = {
+        id: Math.floor(Math.random() * 10000), // Generate a random ID if not present
         age: parseInt(currentLine[headers.indexOf('age')] || '0', 10),
         gender: currentLine[headers.indexOf('gender')] || 'Male',
         chestPainType: parseInt(currentLine[headers.indexOf('chestPainType')] || '0', 10),
@@ -111,7 +111,7 @@ export const appendPatientToCSV = (patient: Patient): string => {
   return rowData.join(',') + '\n';
 };
 
-// New function to properly add patients to the dashboard
+// Function to properly add patients to the database
 export const addPatientsToDatabase = (newPatients: Patient[]): void => {
   try {
     // Get existing patients from localStorage
