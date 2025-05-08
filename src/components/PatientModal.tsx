@@ -5,8 +5,9 @@ import { Patient } from '../utils/types';
 import { generatePdf } from '../utils/pdfGenerator';
 import { Download, Edit } from 'lucide-react';
 import PatientEditForm from './PatientEditForm';
-import { processNewPatient, updatePatientSummary } from '../utils/triageModel';
+import { processNewPatient } from '../utils/triageModel';
 import { toast } from "sonner";
+import { updatePatientInSupabase } from '../utils/supabasePatients';
 
 interface PatientModalProps {
   patient: Patient | null;
@@ -38,13 +39,16 @@ const PatientModal: React.FC<PatientModalProps> = ({ patient, open, onClose }) =
     setIsEditing(false);
   };
 
-  const handleEditSave = (updatedPatientData: any) => {
+  const handleEditSave = async (updatedPatientData: any) => {
     try {
       // Calculate new triage level and urgency score
       const updatedPatient = processNewPatient(updatedPatientData, false);
       
       // Make sure we keep the original patient ID
       updatedPatient.id = patient.id;
+      
+      // Update patient in Supabase
+      await updatePatientInSupabase(updatedPatient);
       
       // Get all patients from localStorage
       const storedPatients = localStorage.getItem('patients');

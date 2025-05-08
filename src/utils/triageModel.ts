@@ -1,9 +1,9 @@
-
 // Import types
 import { Patient, TriageLevel } from './types';
+import { getNextPatientId } from './csvHandler';
 
 // Calculate triage level based on patient data
-export const processNewPatient = (patientData: any, createPatient: boolean = true): Patient => {
+export const processNewPatient = async (patientData: any, createPatient: boolean = true): Promise<Patient> => {
   // Extract vital signs for triage calculation
   const { 
     age, temperature, heartRate, respiratoryRate, spO2, glasgowScore, 
@@ -12,7 +12,7 @@ export const processNewPatient = (patientData: any, createPatient: boolean = tru
   } = patientData;
   
   // Get the next patient ID
-  const nextId = createPatient ? getNextPatientId() : 0;
+  const nextId = createPatient ? await getNextPatientId() : 0;
   
   // Calculate base triage score (from 0-100)
   let urgencyScore = 0;

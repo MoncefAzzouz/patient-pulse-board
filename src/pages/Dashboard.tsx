@@ -8,6 +8,7 @@ import { Patient } from '../utils/types';
 import { Button } from '@/components/ui/button';
 import { CreditCard } from 'lucide-react';
 import { toast } from "sonner";
+import { fetchPatientsFromSupabase, deletePatientFromSupabase } from '../utils/supabasePatients';
 
 const Dashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -20,7 +21,105 @@ const Dashboard = () => {
     standard: { count: 0, patients: [] },
     nonurgent: { count: 0, patients: [] }
   });
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Function to organize patients by triage level
+  const organizePatientsByTriage = (patientList: Patient[]) => {
+    const summary = {
+      critical: { count: 0, patients: [] as Patient[] },
+      emergency: { count: 0, patients: [] as Patient[] },
+      urgent: { count: 0, patients: [] as Patient[] },
+      standard: { count: 0, patients: [] as Patient[] },
+      nonurgent: { count: 0, patients: [] as Patient[] }
+    };
+
+    patientList.forEach(patient => {
+      if (summary[patient.triageLevel]) {
+        summary[patient.triageLevel].patients.push(patient);
+        summary[patient.triageLevel].count++;
+      }
+    });
+
+    // Sort patients in each category by urgency percentage (descending)
+    Object.keys(summary).forEach(level => {
+      if (summary[level].patients && Array.isArray(summary[level].patients)) {
+        summary[level].patients.sort((a: Patient, b: Patient) => 
+          b.urgencyPercentage - a.urgencyPercentage
+        );
+      }
+    });
+
+    return summary;
+  };
+
+  const loadPatients = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch patients from Supabase
+      const supabasePatients = await fetchPatientsFromSupabase();
+      
+      // Convert field names from lowercase (Supabase) to camelCase (Frontend)
+      const formattedPatients = supabasePatients.map(patient => ({
+        id: patient.id,
+        age: patient.age,
+        gender: patient.gender,
+        chestPainType: patient.chestpaintype,
+        cholesterol: patient.cholesterol,
+        exerciseAngina: patient.exerciseangina,
+        plasmaGlucose: patient.plasmaglucose,
+        skinThickness: patient.skinthickness,
+        bmi: patient.bmi,
+        hypertension: patient.hypertension,
+        heartDisease: patient.heartdisease,
+        residenceType: patient.residencetype,
+        smokingStatus: patient.smokingstatus,
+        symptom: patient.symptom,
+        temperature: patient.temperature,
+        heartRate: patient.heartrate,
+        respiratoryRate: patient.respiratoryrate,
+        bloodPressure: patient.bloodpressure,
+        spO2: patient.spo2,
+        glasgowScore: patient.glasgowscore,
+        consciousness: patient.consciousness,
+        massiveBleeding: patient.massivebleeding,
+        respiratoryDistress: patient.respiratorydistress,
+        riskFactors: patient.riskfactors,
+        triageLevel: patient.triagelevel,
+        urgencyPercentage: patient.urgencypercentage
+      }));
+
+      console.log("Loaded patients from Supabase:", formattedPatients.length);
+      
+      // Set state with the fetched patients
+      setPatients(formattedPatients);
+      
+      // Organize patients by triage level
+      const summary = organizePatientsByTriage(formattedPatients);
+      setPatientSummary(summary);
+      
+      // Also save to localStorage for offline backup
+      localStorage.setItem('patients', JSON.stringify(formattedPatients));
+      localStorage.setItem('patientSummary', JSON.stringify(summary));
+    } catch (error) {
+      console.error("Error loading patients from Supabase:", error);
+      toast.error("Failed to load patients. Using local data if available.");
+      
+      // Fallback to localStorage if Supabase fails
+      const storedPatients = localStorage.getItem('patients');
+      const storedSummary = localStorage.getItem('patientSummary');
+      
+      if (storedPatients) {
+        setPatients(JSON.parse(storedPatients));
+      }
+      
+      if (storedSummary) {
+        setPatientSummary(JSON.parse(storedSummary));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Check if logged in
@@ -30,29 +129,7 @@ const Dashboard = () => {
       return;
     }
 
-    // Load patients from localStorage
-    const loadPatients = () => {
-      try {
-        console.log("Loading patient data...");
-        const storedPatients = localStorage.getItem('patients');
-        const storedSummary = localStorage.getItem('patientSummary');
-        
-        if (storedPatients) {
-          const parsedPatients = JSON.parse(storedPatients);
-          console.log("Loaded patients:", parsedPatients.length);
-          setPatients(parsedPatients);
-        }
-        
-        if (storedSummary) {
-          const parsedSummary = JSON.parse(storedSummary);
-          setPatientSummary(parsedSummary);
-        }
-      } catch (error) {
-        console.error("Error loading patient data:", error);
-      }
-    };
-
-    // Load initial data
+    // Load patients from Supabase
     loadPatients();
     
     // Set up event listener for storage changes (for real-time updates)
@@ -88,9 +165,12 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
-  const handlePatientDone = (patient: Patient) => {
+  const handlePatientDone = async (patient: Patient) => {
     try {
-      // Remove patient from the patients array
+      // Remove patient from Supabase
+      await deletePatientFromSupabase(patient.id);
+      
+      // Remove patient from the local patients array
       const updatedPatients = patients.filter(p => p.id !== patient.id);
       
       // Update patient summary
@@ -100,7 +180,7 @@ const Dashboard = () => {
       );
       updatedSummary[patient.triageLevel].count--;
       
-      // Save updated data to localStorage
+      // Save updated data to localStorage as backup
       localStorage.setItem('patients', JSON.stringify(updatedPatients));
       localStorage.setItem('patientSummary', JSON.stringify(updatedSummary));
       
@@ -181,45 +261,54 @@ const Dashboard = () => {
           </Link>
         </div>
         
-        <TriageSummary />
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="col-span-1">
-            <TriageSection 
-              title="Critical" 
-              patients={patientSummary.critical.patients || []} 
-              colorClass="bg-triage-critical"
-            />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <span className="ml-2">Loading patients...</span>
           </div>
-          <div className="col-span-1">
-            <TriageSection 
-              title="Emergency" 
-              patients={patientSummary.emergency.patients || []} 
-              colorClass="bg-triage-emergency"
-            />
-          </div>
-          <div className="col-span-1">
-            <TriageSection 
-              title="Urgent" 
-              patients={patientSummary.urgent.patients || []} 
-              colorClass="bg-triage-urgent"
-            />
-          </div>
-          <div className="col-span-1">
-            <TriageSection 
-              title="Standard" 
-              patients={patientSummary.standard.patients || []} 
-              colorClass="bg-triage-standard"
-            />
-          </div>
-          <div className="col-span-1">
-            <TriageSection 
-              title="Non-urgent" 
-              patients={patientSummary.nonurgent.patients || []} 
-              colorClass="bg-triage-nonurgent"
-            />
-          </div>
-        </div>
+        ) : (
+          <>
+            <TriageSummary />
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="col-span-1">
+                <TriageSection 
+                  title="Critical" 
+                  patients={patientSummary.critical.patients || []} 
+                  colorClass="bg-triage-critical"
+                />
+              </div>
+              <div className="col-span-1">
+                <TriageSection 
+                  title="Emergency" 
+                  patients={patientSummary.emergency.patients || []} 
+                  colorClass="bg-triage-emergency"
+                />
+              </div>
+              <div className="col-span-1">
+                <TriageSection 
+                  title="Urgent" 
+                  patients={patientSummary.urgent.patients || []} 
+                  colorClass="bg-triage-urgent"
+                />
+              </div>
+              <div className="col-span-1">
+                <TriageSection 
+                  title="Standard" 
+                  patients={patientSummary.standard.patients || []} 
+                  colorClass="bg-triage-standard"
+                />
+              </div>
+              <div className="col-span-1">
+                <TriageSection 
+                  title="Non-urgent" 
+                  patients={patientSummary.nonurgent.patients || []} 
+                  colorClass="bg-triage-nonurgent"
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <PatientModal 
@@ -230,5 +319,58 @@ const Dashboard = () => {
     </div>
   );
 };
+
+// TriageSummary Component
+const TriageSummary = () => (
+  <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+    <div className="triage-card triage-card-critical">
+      <div className="text-3xl font-bold">{patientSummary.critical.count}</div>
+      <div className="text-sm">Critical</div>
+    </div>
+    <div className="triage-card triage-card-emergency">
+      <div className="text-3xl font-bold">{patientSummary.emergency.count}</div>
+      <div className="text-sm">Emergency</div>
+    </div>
+    <div className="triage-card triage-card-urgent">
+      <div className="text-3xl font-bold">{patientSummary.urgent.count}</div>
+      <div className="text-sm">Urgent</div>
+    </div>
+    <div className="triage-card triage-card-standard">
+      <div className="text-3xl font-bold">{patientSummary.standard.count}</div>
+      <div className="text-sm">Standard</div>
+    </div>
+    <div className="triage-card triage-card-nonurgent">
+      <div className="text-3xl font-bold">{patientSummary.nonurgent.count}</div>
+      <div className="text-sm">Non-urgent</div>
+    </div>
+  </div>
+);
+
+// TriageSection Component
+const TriageSection = ({ 
+  title, 
+  patients, 
+  colorClass 
+}: { 
+  title: string, 
+  patients: Patient[], 
+  colorClass: string 
+}) => (
+  <div className="mb-6">
+    <div className={`text-white font-bold px-4 py-2 mb-2 ${colorClass} rounded`}>
+      {title}
+    </div>
+    <div className="px-1">
+      {patients && patients.map((patient) => (
+        <PatientCard
+          key={`patient-${patient.id}`}
+          patient={patient}
+          onClick={() => handlePatientClick(patient)}
+          onDone={() => handlePatientDone(patient)}
+        />
+      ))}
+    </div>
+  </div>
+);
 
 export default Dashboard;

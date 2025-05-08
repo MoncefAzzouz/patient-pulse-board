@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { parseCSVData, addPatientsToDatabase } from '../../utils/csvHandler';
 import { Patient } from '../../utils/types';
+import { addPatientsToSupabase } from '../../utils/supabasePatients';
 
 interface ImportDatasetProps {
   onImport: (newPatients: Patient[]) => void;
@@ -16,7 +17,7 @@ const ImportDataset: React.FC<ImportDatasetProps> = ({ onImport }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) {
       return;
     }
@@ -25,7 +26,7 @@ const ImportDataset: React.FC<ImportDatasetProps> = ({ onImport }) => {
     const file = e.target.files[0];
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         if (event.target && typeof event.target.result === 'string') {
           const csvData = event.target.result;
@@ -37,7 +38,10 @@ const ImportDataset: React.FC<ImportDatasetProps> = ({ onImport }) => {
           
           console.log("Parsed patients:", newPatients);
           
-          // Add patients to database and update dashboard
+          // Add patients to Supabase
+          const addedCount = await addPatientsToSupabase(newPatients);
+          
+          // Also add to local database
           addPatientsToDatabase(newPatients);
           
           // Update parent component

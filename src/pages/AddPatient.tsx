@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Header from '../components/Header';
 import { PatientFormData, TriageLevel } from '../utils/types';
-import { processNewPatient, getPatientWarnings, updatePatientSummary } from '../utils/triageModel';
+import { processNewPatient, getPatientWarnings } from '../utils/triageModel';
 import { appendPatientToCSV } from '../utils/csvHandler';
+import { addPatientToSupabase } from '../utils/supabasePatients';
 
 // Import form components
 import PatientFormHeader from '../components/patient-form/PatientFormHeader';
@@ -180,6 +180,9 @@ const AddPatient = () => {
       // Process through our ML model, passing true to actually create a patient
       const patient = processNewPatient(patientData, true);
       
+      // Add patient to Supabase
+      await addPatientToSupabase(patient);
+      
       // Append the patient to the CSV (local storage)
       try {
         const csvRow = appendPatientToCSV(patient);
@@ -199,9 +202,6 @@ const AddPatient = () => {
       } catch (error) {
         console.error("Error appending to CSV:", error);
       }
-      
-      // Update patient summary and trigger dashboard update
-      updatePatientSummary(patient);
       
       console.log("Patient added:", patient);
       

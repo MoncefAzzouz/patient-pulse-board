@@ -1,5 +1,60 @@
 import { Patient } from './types';
-import { processNewPatient, updatePatientSummary } from './triageModel';
+import { processNewPatient } from './triageModel';
+import { supabase } from '@/integrations/supabase/client';
+
+// Function to get the next available patient ID considering both Supabase and localStorage
+export const getNextPatientId = async (): Promise<number> => {
+  try {
+    let maxId = 0;
+    
+    // Check Supabase for the highest ID
+    const { data: supabasePatients, error } = await supabase
+      .from('patients')
+      .select('id')
+      .order('id', { ascending: false })
+      .limit(1);
+    
+    if (error) {
+      console.error('Error fetching max ID from Supabase:', error);
+    } else if (supabasePatients && supabasePatients.length > 0) {
+      maxId = Math.max(maxId, supabasePatients[0].id);
+    }
+    
+    // Also check localStorage
+    const patientsCSV = localStorage.getItem('patientCSV') || '';
+    if (patientsCSV) {
+      const lines = patientsCSV.trim().split('\n');
+      // Skip header row
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',');
+        if (row.length > 0) {
+          const id = parseInt(row[0], 10);
+          if (!isNaN(id) && id > maxId) {
+            maxId = id;
+          }
+        }
+      }
+    }
+    
+    // Get patients from localStorage
+    const storedPatients = localStorage.getItem('patients');
+    if (storedPatients) {
+      const patients = JSON.parse(storedPatients);
+      patients.forEach((patient: Patient) => {
+        if (patient.id > maxId) {
+          maxId = patient.id;
+        }
+      });
+    }
+    
+    // Return next ID (max + 1)
+    return maxId + 1;
+  } catch (error) {
+    console.error('Error determining next patient ID:', error);
+    // Fallback to time-based ID if all else fails
+    return Math.floor(Date.now() / 1000);
+  }
+};
 
 // Function to parse CSV data into Patient objects
 export const parseCSVData = (csvContent: string): Patient[] => {
