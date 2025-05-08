@@ -2,16 +2,14 @@
 import React from 'react';
 import { Patient } from '../utils/types';
 import { Card } from './ui/card';
-import { Heart, AlertTriangle, Activity, Check, Info, CheckCircle } from 'lucide-react';
-import { Button } from './ui/button';
+import { Heart, AlertTriangle, Activity, Check, Info } from 'lucide-react';
 
 interface PatientCardProps {
   patient: Patient;
   onClick: () => void;
-  onMarkDone: (patientId: number) => void;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick, onMarkDone }) => {
+const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
   // Check if patient is undefined or null
   if (!patient) {
     console.log("Undefined patient in PatientCard");
@@ -53,18 +51,13 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick, onMarkDone 
     }
   };
 
-  const handleDoneClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onMarkDone(patient.id);
-  };
-
   return (
     <Card 
       className={getTriageClassName()} 
       onClick={onClick}
     >
-      <div className="flex justify-between items-start w-full">
-        <div className="flex-1">
+      <div className="flex justify-between items-center w-full">
+        <div>
           <div className="font-semibold flex items-center gap-2">
             {getIcon()} Patient {patient.id}
           </div>
@@ -76,19 +69,8 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick, onMarkDone 
             Severity: {getSeverityText()}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className={getUrgencyClassName()}>
-            {patient.urgencyPercentage}%
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleDoneClick} 
-            className="text-green-600 hover:text-green-800 p-1 h-auto"
-            title="Mark as done"
-          >
-            <CheckCircle className="h-5 w-5" />
-          </Button>
+        <div className={getUrgencyClassName()}>
+          {patient.urgencyPercentage}%
         </div>
       </div>
     </Card>

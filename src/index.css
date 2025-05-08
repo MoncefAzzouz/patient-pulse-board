@@ -71,167 +71,111 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gradient-to-br from-gray-50 to-blue-50 text-foreground min-h-screen;
+    background-attachment: fixed;
+  }
+
+  /* Triage cards with enhanced styling */
+  .triage-card {
+    @apply rounded-xl shadow-md p-4 my-2 text-white relative overflow-hidden transition-all hover:shadow-xl cursor-pointer hover:translate-y-[-2px] backdrop-blur-sm;
+  }
+
+  .triage-card-critical {
+    @apply bg-gradient-to-r from-triage-critical to-red-700;
+  }
+
+  .triage-card-emergency {
+    @apply bg-gradient-to-r from-triage-emergency to-orange-700;
+  }
+  
+  .triage-card-urgent {
+    @apply bg-gradient-to-r from-triage-urgent to-amber-600;
+  }
+  
+  .triage-card-standard {
+    @apply bg-gradient-to-r from-triage-standard to-emerald-700;
+  }
+  
+  .triage-card-nonurgent {
+    @apply bg-gradient-to-r from-triage-nonurgent to-blue-700;
+  }
+
+  .patient-card {
+    @apply bg-white border rounded-lg shadow-sm p-4 mb-3 hover:shadow-md transition-all flex justify-between items-center transform hover:scale-[1.01];
+  }
+
+  .patient-card-critical {
+    @apply border-l-4 border-triage-critical;
+  }
+
+  .patient-card-emergency {
+    @apply border-l-4 border-triage-emergency;
+  }
+
+  .patient-card-urgent {
+    @apply border-l-4 border-triage-urgent;
+  }
+
+  .patient-card-standard {
+    @apply border-l-4 border-triage-standard;
+  }
+
+  .patient-card-nonurgent {
+    @apply border-l-4 border-triage-nonurgent;
+  }
+
+  .urgency-tag {
+    @apply font-bold text-right rounded-full px-3 py-1;
+  }
+
+  .urgency-tag-critical {
+    @apply bg-red-50 text-triage-critical border border-red-200;
+  }
+
+  .urgency-tag-emergency {
+    @apply bg-orange-50 text-triage-emergency border border-orange-200;
+  }
+
+  .urgency-tag-urgent {
+    @apply bg-amber-50 text-triage-urgent border border-amber-200;
+  }
+
+  .urgency-tag-standard {
+    @apply bg-emerald-50 text-triage-standard border border-emerald-200;
+  }
+
+  .urgency-tag-nonurgent {
+    @apply bg-blue-50 text-triage-nonurgent border border-blue-200;
+  }
+
+  .section-header {
+    @apply text-2xl font-bold mb-4 mt-6 text-gray-800;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-white/90 backdrop-blur-sm border border-white/50 shadow-sm;
   }
 }
 
-/* Triage colors */
-.text-triage-critical {
-  @apply text-red-600;
+/* Stylish scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.text-triage-emergency {
-  @apply text-orange-600;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
-.text-triage-urgent {
-  @apply text-amber-600;
+::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 4px;
 }
 
-.text-triage-standard {
-  @apply text-green-600;
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
-
-.text-triage-nonurgent {
-  @apply text-blue-600;
-}
-
-.bg-triage-critical {
-  @apply bg-red-600;
-}
-
-.bg-triage-emergency {
-  @apply bg-orange-600;
-}
-
-.bg-triage-urgent {
-  @apply bg-amber-600;
-}
-
-.bg-triage-standard {
-  @apply bg-green-600;
-}
-
-.bg-triage-nonurgent {
-  @apply bg-blue-600;
-}
-
-/* Cards */
-.triage-card {
-  @apply px-4 py-3 rounded-lg bg-white shadow-sm text-center mb-4;
-}
-
-.triage-card-critical {
-  @apply border-l-4 border-red-600;
-}
-
-.triage-card-emergency {
-  @apply border-l-4 border-orange-600;
-}
-
-.triage-card-urgent {
-  @apply border-l-4 border-amber-600;
-}
-
-.triage-card-standard {
-  @apply border-l-4 border-green-600;
-}
-
-.triage-card-nonurgent {
-  @apply border-l-4 border-blue-600;
-}
-
-/* Patient cards */
-.patient-card {
-  @apply px-4 py-3 my-2 cursor-pointer hover:bg-gray-50 transition-colors;
-}
-
-.patient-card-critical {
-  @apply border-l-4 border-red-500;
-}
-
-.patient-card-emergency {
-  @apply border-l-4 border-orange-500;
-}
-
-.patient-card-urgent {
-  @apply border-l-4 border-amber-500;
-}
-
-.patient-card-standard {
-  @apply border-l-4 border-green-500;
-}
-
-.patient-card-nonurgent {
-  @apply border-l-4 border-blue-500;
-}
-
-/* Urgency tags */
-.urgency-tag {
-  @apply px-2 py-1 text-xs font-bold text-white rounded-full;
-}
-
-.urgency-tag-critical {
-  @apply bg-red-600;
-}
-
-.urgency-tag-emergency {
-  @apply bg-orange-600;
-}
-
-.urgency-tag-urgent {
-  @apply bg-amber-600;
-}
-
-.urgency-tag-standard {
-  @apply bg-green-600;
-}
-
-.urgency-tag-nonurgent {
-  @apply bg-blue-600;
-}
-
-/* Scanner animation */
-@keyframes scanline {
-  0% {
-    top: -5%;
-  }
-  100% {
-    top: 105%;
-  }
-}
-
-/* Card swipe animation */
-@keyframes card-swipe {
-  0% {
-    left: -100%;
-  }
-  50% {
-    left: 100%;
-  }
-  50.01% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-/* Form styling */
-.form-section {
-  @apply p-4 border border-gray-200 rounded-lg bg-white mb-4;
-}
-
-.form-section-title {
-  @apply text-lg font-medium mb-4 text-gray-700 flex items-center gap-2;
-}
-
-.form-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2;
-}
-
-.form-group {
-  @apply mb-2;
-}
-
