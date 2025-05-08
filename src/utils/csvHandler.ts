@@ -1,215 +1,190 @@
+
 import { Patient } from './types';
 import { processNewPatient } from './triageModel';
-import { supabase } from '@/integrations/supabase/client';
+import { addPatientToSupabase } from './supabasePatients';
+import { toast } from "sonner";
 
-// Function to get the next available patient ID considering both Supabase and localStorage
-export const getNextPatientId = async (): Promise<number> => {
+// Function to add patients from a dataset to the local database
+export const addPatientsToDatabase = (patients: Patient[]): void => {
   try {
-    let maxId = 0;
+    // Get existing CSV data
+    const existingCSV = localStorage.getItem('patientCSV') || '';
+    const lines = existingCSV.trim().split('\n');
     
-    // Check Supabase for the highest ID
-    const { data: supabasePatients, error } = await supabase
-      .from('patients')
-      .select('id')
-      .order('id', { ascending: false })
-      .limit(1);
-    
-    if (error) {
-      console.error('Error fetching max ID from Supabase:', error);
-    } else if (supabasePatients && supabasePatients.length > 0) {
-      maxId = Math.max(maxId, supabasePatients[0].id);
+    // If only header exists, start fresh
+    let csvData = existingCSV;
+    if (lines.length <= 1) {
+      csvData = 'id,age,gender,chestPainType,cholesterol,exerciseAngina,' +
+        'plasmaGlucose,skinThickness,bmi,hypertension,heartDisease,' +
+        'residenceType,smokingStatus,symptom,temperature,heartRate,' +
+        'respiratoryRate,bloodPressure,spO2,glasgowScore,consciousness,' +
+        'massiveBleeding,respiratoryDistress,riskFactors,triageLevel,urgencyPercentage\n';
     }
     
-    // Also check localStorage
-    const patientsCSV = localStorage.getItem('patientCSV') || '';
-    if (patientsCSV) {
-      const lines = patientsCSV.trim().split('\n');
-      // Skip header row
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',');
-        if (row.length > 0) {
-          const id = parseInt(row[0], 10);
-          if (!isNaN(id) && id > maxId) {
-            maxId = id;
-          }
-        }
-      }
-    }
+    // Add each patient as a new row in CSV
+    patients.forEach(patient => {
+      csvData += `${patient.id},${patient.age},${patient.gender},${patient.chestPainType},${patient.cholesterol},${patient.exerciseAngina},` +
+        `${patient.plasmaGlucose},${patient.skinThickness},${patient.bmi},${patient.hypertension},${patient.heartDisease},` +
+        `${patient.residenceType},${patient.smokingStatus},${patient.symptom},${patient.temperature},${patient.heartRate},` +
+        `${patient.respiratoryRate},${patient.bloodPressure},${patient.spO2},${patient.glasgowScore},${patient.consciousness},` +
+        `${patient.massiveBleeding},${patient.respiratoryDistress},${patient.riskFactors || ''},${patient.triageLevel},${patient.urgencyPercentage}\n`;
+    });
     
-    // Get patients from localStorage
-    const storedPatients = localStorage.getItem('patients');
-    if (storedPatients) {
-      const patients = JSON.parse(storedPatients);
-      patients.forEach((patient: Patient) => {
-        if (patient.id > maxId) {
-          maxId = patient.id;
-        }
-      });
-    }
+    // Save to localStorage
+    localStorage.setItem('patientCSV', csvData);
     
-    // Return next ID (max + 1)
-    return maxId + 1;
+    // Update the patient summary
+    // Dispatch a custom event to trigger the dashboard to reload
+    window.dispatchEvent(new CustomEvent('patientDataUpdated'));
   } catch (error) {
-    console.error('Error determining next patient ID:', error);
-    // Fallback to time-based ID if all else fails
-    return Math.floor(Date.now() / 1000);
+    console.error("Error adding patients to database:", error);
   }
 };
 
 // Function to parse CSV data into Patient objects
-export const parseCSVData = (csvContent: string): Patient[] => {
-  const lines = csvContent.trim().split('\n');
-  const headers = lines[0].split(',');
-  
-  const patients: Patient[] = [];
-  
-  // Start from 1 to skip the header row
-  for (let i = 1; i < lines.length; i++) {
-    const currentLine = lines[i].split(',');
-    if (currentLine.length < 5) continue; // Skip invalid rows
+export const parseCSVData = (csvData: string): Patient[] => {
+  try {
+    const lines = csvData.trim().split('\n');
     
-    try {
-      // Map CSV data to patient object - adjust field mapping based on your CSV structure
-      const patientData = {
-        id: Math.floor(Math.random() * 10000), // Generate a random ID if not present
-        age: parseInt(currentLine[headers.indexOf('age')] || '0', 10),
-        gender: currentLine[headers.indexOf('gender')] || 'Male',
-        chestPainType: parseInt(currentLine[headers.indexOf('chestPainType')] || '0', 10),
-        cholesterol: parseInt(currentLine[headers.indexOf('cholesterol')] || '0', 10),
-        exerciseAngina: parseInt(currentLine[headers.indexOf('exerciseAngina')] || '0', 10),
-        plasmaGlucose: parseInt(currentLine[headers.indexOf('plasmaGlucose')] || '0', 10),
-        skinThickness: parseInt(currentLine[headers.indexOf('skinThickness')] || '0', 10),
-        bmi: parseFloat(currentLine[headers.indexOf('bmi')] || '0'),
-        hypertension: parseInt(currentLine[headers.indexOf('hypertension')] || '0', 10),
-        heartDisease: parseInt(currentLine[headers.indexOf('heartDisease')] || '0', 10),
-        residenceType: currentLine[headers.indexOf('residenceType')] || 'Urban',
-        smokingStatus: currentLine[headers.indexOf('smokingStatus')] || 'never smoked',
-        symptom: currentLine[headers.indexOf('symptom')] || 'None',
-        temperature: parseFloat(currentLine[headers.indexOf('temperature')] || '37'),
-        heartRate: parseInt(currentLine[headers.indexOf('heartRate')] || '70', 10),
-        respiratoryRate: parseInt(currentLine[headers.indexOf('respiratoryRate')] || '14', 10),
-        bloodPressure: currentLine[headers.indexOf('bloodPressure')] || '120/80',
-        spO2: parseInt(currentLine[headers.indexOf('spO2')] || '98', 10),
-        glasgowScore: parseInt(currentLine[headers.indexOf('glasgowScore')] || '15', 10),
-        consciousness: currentLine[headers.indexOf('consciousness')] || 'Awake',
-        massiveBleeding: currentLine[headers.indexOf('massiveBleeding')] === 'true',
-        respiratoryDistress: currentLine[headers.indexOf('respiratoryDistress')] === 'true',
-        riskFactors: currentLine[headers.indexOf('riskFactors')] || '',
-        triageLevel: 'standard', // Will be calculated by processNewPatient
-        urgencyPercentage: 0 // Will be calculated by processNewPatient
-      };
-      
-      // Process the patient through the ML model to get triage level
-      const processedPatient = processNewPatient(patientData);
-      
-      console.log("Processed patient from CSV:", processedPatient);
-      patients.push(processedPatient);
-    } catch (error) {
-      console.error("Error processing row:", error, "Row:", currentLine);
+    // Need at least header plus one row
+    if (lines.length < 2) {
+      throw new Error("Invalid CSV format: no data rows found");
     }
+    
+    const patients: Patient[] = [];
+    let nextId = getNextPatientId();
+    
+    // Process each data row (skip header row)
+    for (let i = 1; i < lines.length; i++) {
+      const row = lines[i].split(',');
+      
+      // Basic validation
+      if (row.length < 10) {
+        console.warn(`Skipping row ${i+1}: insufficient data`);
+        continue;
+      }
+      
+      try {
+        // Extract basic data
+        const age = parseInt(row[1], 10) || Math.floor(Math.random() * 50 + 20);
+        const gender = row[2] || (Math.random() > 0.5 ? 'Male' : 'Female');
+        
+        // Health indicators with defaults
+        const chestPainType = parseInt(row[3], 10) || Math.floor(Math.random() * 4);
+        const cholesterol = parseInt(row[4], 10) || Math.floor(Math.random() * 150 + 150);
+        const exerciseAngina = parseInt(row[5], 10) || Math.floor(Math.random() * 2);
+        const plasmaGlucose = parseInt(row[6], 10) || Math.floor(Math.random() * 100 + 70);
+        const skinThickness = parseInt(row[7], 10) || Math.floor(Math.random() * 30 + 10);
+        const bmi = parseFloat(row[8]) || (Math.random() * 15 + 20).toFixed(1);
+        const hypertension = parseInt(row[9], 10) || Math.floor(Math.random() * 2);
+        const heartDisease = parseInt(row[10], 10) || Math.floor(Math.random() * 2);
+        
+        // Demographic data
+        const residenceType = row[11] || (Math.random() > 0.7 ? 'Rural' : 'Urban');
+        const smokingStatus = row[12] || (['Never', 'Former', 'Current'])[Math.floor(Math.random() * 3)];
+        
+        // Clinical data
+        const symptom = row[13] || (['Chest Pain', 'Shortness of Breath', 'Fever', 'Headache', 'Abdominal Pain'])[Math.floor(Math.random() * 5)];
+        const temperature = parseFloat(row[14]) || (36 + Math.random() * 3).toFixed(1);
+        const heartRate = parseInt(row[15], 10) || Math.floor(Math.random() * 50 + 60);
+        const respiratoryRate = parseInt(row[16], 10) || Math.floor(Math.random() * 10 + 12);
+        const bloodPressure = row[17] || `${Math.floor(Math.random() * 40 + 110)}/${Math.floor(Math.random() * 30 + 60)}`;
+        const spO2 = parseFloat(row[18]) || Math.floor(Math.random() * 10 + 90);
+        const glasgowScore = parseFloat(row[19]) || Math.floor(Math.random() * 3 + 13);
+        
+        // Consciousness and critical indicators
+        const consciousness = row[20] || (['Awake', 'Verbal response', 'Responsive to pain', 'Unresponsive'])[Math.floor(Math.random() * 4)];
+        const massiveBleeding = row[21] === 'true' || Math.random() < 0.05;
+        const respiratoryDistress = row[22] === 'true' || Math.random() < 0.1;
+        
+        // Risk factors
+        const riskFactors = row[23] || '';
+        
+        // Process the patient data to calculate triage level and urgency
+        const patientData = {
+          age,
+          gender,
+          chestPainType,
+          cholesterol,
+          exerciseAngina,
+          plasmaGlucose,
+          skinThickness,
+          bmi,
+          hypertension,
+          heartDisease,
+          residenceType,
+          smokingStatus,
+          symptom,
+          temperature,
+          heartRate,
+          respiratoryRate,
+          bloodPressure,
+          spO2,
+          glasgowScore,
+          consciousness,
+          massiveBleeding,
+          respiratoryDistress,
+          riskFactors
+        };
+        
+        // Create a new patient with a unique ID and calculated triage level
+        const patient = processNewPatient({...patientData, id: nextId++}, false);
+        
+        // Add to Supabase
+        addPatientToSupabase(patient)
+          .then(() => {
+            console.log(`Patient ${patient.id} added to Supabase`);
+          })
+          .catch(error => {
+            console.error(`Error adding patient ${patient.id} to Supabase:`, error);
+            toast.error(`Failed to add patient ${patient.id} to database`);
+          });
+        
+        patients.push(patient);
+      } catch (error) {
+        console.error(`Error processing row ${i+1}:`, error);
+      }
+    }
+    
+    return patients;
+  } catch (error) {
+    console.error("Error parsing CSV data:", error);
+    throw new Error(`Failed to parse CSV data: ${error.message}`);
   }
-  
-  return patients;
 };
 
-// Function to export patients to CSV
-export const exportPatientsToCSV = (patients: Patient[]): string => {
-  // Define CSV headers based on patient properties
-  const headers = [
-    'id', 'age', 'gender', 'chestPainType', 'cholesterol', 'exerciseAngina',
-    'plasmaGlucose', 'skinThickness', 'bmi', 'hypertension', 'heartDisease',
-    'residenceType', 'smokingStatus', 'symptom', 'temperature', 'heartRate',
-    'respiratoryRate', 'bloodPressure', 'spO2', 'glasgowScore', 'consciousness',
-    'massiveBleeding', 'respiratoryDistress', 'riskFactors', 'triageLevel', 'urgencyPercentage'
-  ];
+// Function to get the next unique patient ID
+export const getNextPatientId = (): number => {
+  // Get existing patients from localStorage
+  const storedPatients = localStorage.getItem('patients');
+  let maxId = 0;
   
-  // Create CSV content
-  let csvContent = headers.join(',') + '\n';
-  
-  // Add patient data rows
-  patients.forEach(patient => {
-    const rowData = headers.map(header => {
-      if (header === 'triageLevel' || header === 'gender' || header === 'residenceType' || 
-          header === 'smokingStatus' || header === 'consciousness' || header === 'symptom' || 
-          header === 'bloodPressure' || header === 'riskFactors') {
-        return `"${patient[header as keyof Patient]}"`;
-      } else {
-        return patient[header as keyof Patient];
+  if (storedPatients) {
+    const patients = JSON.parse(storedPatients);
+    
+    // Find the maximum ID
+    patients.forEach((patient: Patient) => {
+      if (patient.id > maxId) {
+        maxId = patient.id;
       }
     });
-    csvContent += rowData.join(',') + '\n';
-  });
-  
-  return csvContent;
-};
-
-// Function to append a new patient to the CSV file
-export const appendPatientToCSV = (patient: Patient): string => {
-  const headers = [
-    'id', 'age', 'gender', 'chestPainType', 'cholesterol', 'exerciseAngina',
-    'plasmaGlucose', 'skinThickness', 'bmi', 'hypertension', 'heartDisease',
-    'residenceType', 'smokingStatus', 'symptom', 'temperature', 'heartRate',
-    'respiratoryRate', 'bloodPressure', 'spO2', 'glasgowScore', 'consciousness',
-    'massiveBleeding', 'respiratoryDistress', 'riskFactors', 'triageLevel', 'urgencyPercentage'
-  ];
-  
-  const rowData = headers.map(header => {
-    if (header === 'triageLevel' || header === 'gender' || header === 'residenceType' || 
-        header === 'smokingStatus' || header === 'consciousness' || header === 'symptom' || 
-        header === 'bloodPressure' || header === 'riskFactors') {
-      return `"${patient[header as keyof Patient]}"`;
-    } else {
-      return patient[header as keyof Patient];
-    }
-  });
-  
-  return rowData.join(',') + '\n';
-};
-
-// Function to properly add patients to the database
-export const addPatientsToDatabase = (newPatients: Patient[]): void => {
-  try {
-    // Get existing patients from localStorage
-    const storedPatients = localStorage.getItem('patients') || '[]';
-    const existingPatients = JSON.parse(storedPatients);
-    
-    // Add new patients to existing ones
-    const allPatients = [...existingPatients, ...newPatients];
-    
-    // Save all patients to localStorage
-    localStorage.setItem('patients', JSON.stringify(allPatients));
-    
-    // Update patient summary for dashboard
-    const summary = {
-      critical: { count: 0, patients: [] as Patient[] },
-      emergency: { count: 0, patients: [] as Patient[] },
-      urgent: { count: 0, patients: [] as Patient[] },
-      standard: { count: 0, patients: [] as Patient[] },
-      nonurgent: { count: 0, patients: [] as Patient[] }
-    };
-    
-    // Group all patients by triage level
-    allPatients.forEach(patient => {
-      const level = patient.triageLevel as keyof typeof summary;
-      summary[level].count += 1;
-      summary[level].patients.push(patient);
-    });
-    
-    // Sort patients within each triage level by urgency percentage (descending)
-    Object.keys(summary).forEach(level => {
-      const triageLevel = level as keyof typeof summary;
-      summary[triageLevel].patients.sort((a, b) => b.urgencyPercentage - a.urgencyPercentage);
-    });
-    
-    // Save updated summary to localStorage
-    localStorage.setItem('patientSummary', JSON.stringify(summary));
-    
-    // Trigger storage event for dashboard to detect the change
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new CustomEvent('patientDataUpdated'));
-    
-    console.log(`Added ${newPatients.length} patients to database. Total: ${allPatients.length}`);
-  } catch (error) {
-    console.error("Error adding patients to database:", error);
   }
+  
+  // Also check CSV data for IDs
+  const patientsCSV = localStorage.getItem('patientCSV') || '';
+  const lines = patientsCSV.trim().split('\n');
+  
+  // Skip header row and find maximum ID
+  for (let i = 1; i < lines.length; i++) {
+    const row = lines[i].split(',');
+    if (row.length > 0) {
+      const id = parseInt(row[0], 10);
+      if (!isNaN(id) && id > maxId) {
+        maxId = id;
+      }
+    }
+  }
+  
+  // Return next ID (max + 1)
+  return maxId + 1;
 };
