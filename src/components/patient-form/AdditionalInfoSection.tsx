@@ -5,12 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PatientFormData } from '../../utils/types';
 
-interface AdditionalInfoSectionProps {
+export interface AdditionalInfoProps {
   formData: PatientFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
-const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({ 
+const AdditionalInfoSection: React.FC<AdditionalInfoProps> = ({ 
   formData, 
   handleInputChange 
 }) => {

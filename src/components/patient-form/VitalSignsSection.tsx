@@ -4,12 +4,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { PatientFormData } from '../../utils/types';
 
-interface VitalSignsSectionProps {
+export interface VitalSignsProps {
   formData: PatientFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
-const VitalSignsSection: React.FC<VitalSignsSectionProps> = ({ 
+const VitalSignsSection: React.FC<VitalSignsProps> = ({ 
   formData, 
   handleInputChange 
 }) => {

@@ -6,14 +6,14 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Switch } from '@/components/ui/switch';
 import { PatientFormData } from '../../utils/types';
 
-interface CardiacStatusSectionProps {
+export interface CardiacStatusProps {
   formData: PatientFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
   handleSwitchChange: (name: string, checked: boolean) => void;
 }
 
-const CardiacStatusSection: React.FC<CardiacStatusSectionProps> = ({ 
+const CardiacStatusSection: React.FC<CardiacStatusProps> = ({ 
   formData, 
   handleInputChange, 
   handleSelectChange, 

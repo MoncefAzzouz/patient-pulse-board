@@ -5,13 +5,13 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Switch } from '@/components/ui/switch';
 import { PatientFormData } from '../../utils/types';
 
-interface ClinicalAssessmentSectionProps {
+export interface ClinicalAssessmentProps {
   formData: PatientFormData;
   handleSelectChange: (name: string, value: string) => void;
   handleSwitchChange: (name: string, checked: boolean) => void;
 }
 
-const ClinicalAssessmentSection: React.FC<ClinicalAssessmentSectionProps> = ({ 
+const ClinicalAssessmentSection: React.FC<ClinicalAssessmentProps> = ({ 
   formData, 
   handleSelectChange, 
   handleSwitchChange 

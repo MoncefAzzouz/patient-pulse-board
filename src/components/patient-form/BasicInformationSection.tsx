@@ -6,13 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PatientFormData } from '../../utils/types';
 
-interface BasicInformationSectionProps {
+export interface BasicInfoProps {
   formData: PatientFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
 }
 
-const BasicInformationSection: React.FC<BasicInformationSectionProps> = ({ 
+const BasicInformationSection: React.FC<BasicInfoProps> = ({ 
   formData, 
   handleInputChange, 
   handleSelectChange 
