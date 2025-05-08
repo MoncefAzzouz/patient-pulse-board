@@ -2,14 +2,16 @@
 import React from 'react';
 import { Patient } from '../utils/types';
 import { Card } from './ui/card';
-import { Heart, AlertTriangle, Activity, Check, Info } from 'lucide-react';
+import { Heart, AlertTriangle, Activity, Check, Info, X } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface PatientCardProps {
   patient: Patient;
   onClick: () => void;
+  onDone: () => void;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
+const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick, onDone }) => {
   // Check if patient is undefined or null
   if (!patient) {
     console.log("Undefined patient in PatientCard");
@@ -51,6 +53,11 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
     }
   };
 
+  const handleDoneClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDone();
+  };
+
   return (
     <Card 
       className={getTriageClassName()} 
@@ -69,8 +76,18 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
             Severity: {getSeverityText()}
           </div>
         </div>
-        <div className={getUrgencyClassName()}>
-          {patient.urgencyPercentage}%
+        <div className="flex flex-col items-end gap-2">
+          <div className={getUrgencyClassName()}>
+            {patient.urgencyPercentage}%
+          </div>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            className="mt-2" 
+            onClick={handleDoneClick}
+          >
+            <X className="h-4 w-4 mr-1" /> Done
+          </Button>
         </div>
       </div>
     </Card>

@@ -7,6 +7,7 @@ import PatientModal from '../components/PatientModal';
 import { Patient } from '../utils/types';
 import { Button } from '@/components/ui/button';
 import { Fingerprint } from 'lucide-react';
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -87,6 +88,34 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
+  const handlePatientDone = (patient: Patient) => {
+    try {
+      // Remove patient from the patients array
+      const updatedPatients = patients.filter(p => p.id !== patient.id);
+      
+      // Update patient summary
+      const updatedSummary = {...patientSummary};
+      updatedSummary[patient.triageLevel].patients = updatedSummary[patient.triageLevel].patients.filter(
+        (p: Patient) => p.id !== patient.id
+      );
+      updatedSummary[patient.triageLevel].count--;
+      
+      // Save updated data to localStorage
+      localStorage.setItem('patients', JSON.stringify(updatedPatients));
+      localStorage.setItem('patientSummary', JSON.stringify(updatedSummary));
+      
+      // Update state
+      setPatients(updatedPatients);
+      setPatientSummary(updatedSummary);
+      
+      // Show confirmation toast
+      toast.success(`Patient ${patient.id} has been marked as done.`);
+    } catch (error) {
+      console.error("Error removing patient:", error);
+      toast.error("Failed to remove patient. Please try again.");
+    }
+  };
+
   const TriageSummary = () => (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
       <div className="triage-card triage-card-critical">
@@ -131,6 +160,7 @@ const Dashboard = () => {
             key={`patient-${patient.id}`}
             patient={patient}
             onClick={() => handlePatientClick(patient)}
+            onDone={() => handlePatientDone(patient)}
           />
         ))}
       </div>
@@ -146,7 +176,7 @@ const Dashboard = () => {
           <Link to="/fingerprint-scan">
             <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
               <Fingerprint className="h-4 w-4" />
-              Fingerprint Scan
+              Shiffaa Card Reader
             </Button>
           </Link>
         </div>
